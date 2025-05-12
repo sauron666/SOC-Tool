@@ -17,7 +17,7 @@ OSINT
 
 Файл анализ
 - Drag & Drop на файлове
-- VirusTotal и Hybrid-Analysis сканиране на fajlove
+- VirusTotal и Hybrid-Analysis сканиране на файлове
 
 Мрежови инструменти
 - Пинг, Traceroute, Continuous Ping to multiple ip adresses
