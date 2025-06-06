@@ -1,0 +1,25 @@
+pyinstaller
+pywin32
+bs4
+whois
+geoip2
+ipwhois
+dnspython
+shodan
+ldap3
+pyad
+Pillow
+virustotal-python
+aiohttp
+pyperclip
+python-docx
+extract-msg
+pymupdf
+httpx
+openai
+pandas
+urllib3
+requests-negotiate-sspi
+olefile
+PySocks
+tkinterdnd2 @ git+https://github.com/pmgagne/tkinterdnd2.git
