@@ -1,0 +1,4489 @@
+service-switcher icon consisting of four squares
+Netcraft Logo
+Takedown
+capital letter A in a circle
+martin_stefanov@dskbank.bg
+Dashboard
+View attacks
+Report attack
+Statistics
+Timelines
+Help
+API
+two preference sliders
+a cog
+Search...
+Authentication
+Takedowns
+New Takedowns
+Existing Takedowns
+Authorisation
+Escalation
+Takedown Notes
+Related Evidence Files
+Related Report Submissions
+Takedown Relationships
+False Positives
+Service Configuration
+Attack Types
+Contracts and Credits
+Impersonation Targets
+Regions
+User Accounts
+Statistics
+Takedown Totals
+Third Party Integrations
+Event Sources
+Documentation Powered by Redocly
+Netcraft Takedown API (Version 1)
+The Takedown API allows you to integrate your automated tools into the Netcraft Takedown service.
+
+A number of different endpoints are provided which allow you to view information about your attacks and service configuration, as well as report new attacks and make changes to existing takedowns.
+
+Rate Limits
+Please note that all of the API endpoints are subject to rate limiting. The limit is 120 requests per minute. This applies to the total number of requests across all endpoints, i.e. if you make 60 requests to /report and 60 to /attacks in the space of a minute you will hit the rate limit. This rate limiting is applied based on the IP address of the machine making the request.
+
+There is also a limit of 1,000,000 entries returned within a 24 hour period (moving time window) for the /attacks endpoint. This rate limiting is applied based on the email address that calls the API.
+
+If either rate limit is exceeded, a 429 Too Many Requests response with the following response is returned:
+
+{"error":"rate_limited"}
+Legacy Documentation
+The v1 API is backwards-compatible with the legacy API. The v1 documentation should be used even if you haven't migrated to the v1 endpoints.
+
+If you still require the legacy API documentation, you can find it here.
+
+Please note that the legacy documentation is no longer maintained, and its use is therefore discouraged.
+
+Authentication
+Bearer Auth
+For bearer authentication, you must provide an API key inside the Authorization header as follows:
+
+Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt
+
+You can manage your API keys here. Make sure you copy the API key to a secure location (e.g. a password manager) since it will not be shown again in the account portal after you've generated it.
+
+Security Scheme Type	HTTP
+HTTP Authorization Scheme	bearer
+New Takedowns
+Report an Attack
+
+post
+/report
+Minimum Access Level Required	Authoriser
+Testing Endpoint 	https://takedown.netcraft.com/api/v1/test/report/
+Deprecated Endpoint Name 	https://takedown.netcraft.com/authorise.php
+This endpoint can be used to report a new attack or authorise an existing attack in the Takedown service.
+
+If a takedown for the attack already exists in the system it will be authorised, otherwise, a new takedown will be added and authorised.
+
+All submissions to this endpoint should be pre-validated. If you are reporting URLs from an external source without verification then you should submit these to the Netcraft Report service (API).
+
+Note that whilst a minimum of "Authoriser" access is required to access this endpoint, you will not be able to authorise a takedown that requires managed credits without an access level of "Escalator" or higher.
+
+Submissions from some reporters may go through additional verification before appearing in the takedown system. This will be indicated by the TD_VERIFY response. A report receiving this response may appear in Takedown after some delay, or not at all if verification fails.To submit binary data (dropsite or email evidence) the "multipart/form-data" request schema must be used.
+
+Note that authorising a takedown may cost one or more credits.
+
+Authorizations:
+Bearer Auth
+Request Body schema: 
+multipart/form-data
+multipart/form-data
+attack
+required
+string
+The location of the attack that you would like to take down, e.g. a phishing URL, or a fraudulent email address.
+
+comment
+required
+string
+The reason for your report, such as a description of the attack.
+
+region	
+string
+Value: "dskbank"
+The name of the region to create a takedown under.
+
+dskbank - DSK Bank AD
+This parameter is required if you have access for more than one region.
+
+brand	
+string
+Value: "dskbank"
+The brand to report the takedown under. If no brand is specified, the brand of the provided region will be used.
+
+dskbank - DSK Bank
+type	
+string
+Default: "phishing_url"
+Enum: "phishing_url" "malware_url" "dropsite" … 120 more
+The type of attack being reported.
+
+You can find more information about the different attack types here.
+
+inactive	
+boolean
+Default: false
+Should be set to true if the attack is not currently active. This will place the takedown directly into the "Inactive (Monitoring)" status, which can be used to monitor suspicious sites.
+
+force_auth	
+boolean
+Default: true
+When set to true, Netcraft will be authorised to start the takedown as soon as the report has been processed. If this value is set to false, the takedown will only be authorised if you have automatic authorisation enabled for the given attack type, or if the takedown is manaully authorised later through the web interface.
+
+malware	
+boolean
+Should be set to true if the reported content contains or is related to a computer virus. This is used to determine the correct attack type in the case where the type parameter has not been provided.
+
+This is required for all malware attacks where the type parameter has not been provided.
+
+suspected_fraudulent_domain	
+boolean
+Default: false
+Should be set to true if you believe that the domain name has been registered as part of the fraud. This will ensure that the registrar is contacted to seek suspension of the domain name.
+
+dropsite	
+string <binary>
+A file containing the HTML attachment that submits data to the dropsite URL that you wish to report. See our blog post for more information on dropsite attacks.
+
+This parameter is required for attacks with the type dropsite.
+
+evidence	
+string <binary>
+A file containing evidence to support the report, such as the phishing kit archive, or a copy of a fraudulent email.
+
+This parameter is required for Email attacks.
+
+password	
+string
+The password to extract any archived evidence provided via the evidence parameter, if necessary.
+
+phishkit_fetch_url	
+string
+The URL where the phishkit archive was found.
+
+This parameter is required for phishkit_email attacks.
+
+phishkit_phish_url	
+string
+The URL of the phishing attack which uses the referenced phishkit.
+
+This parameter is required for phishkit_email and phishkit_archive attacks.
+
+customer_label	
+string
+A free-text field which can be used to keep track of particular attacks.
+
+tags	
+array
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+One or more tags to apply to the attack. Multiple values may be specified as a comma-separated list.
+
+You can find more information about tagging attacks here.
+
+impersonation_target_id	
+integer
+The ID of the impersonation target to attach to the takedown.
+
+Impersonation target IDs can be found using the Impersonation Targets endpoint.
+
+This parameter is required for social media impersonation attacks.
+
+Responses
+200 The reported attack id, or an error response detailing a report failure
+The endpoint will return one or more lines of plain text.
+
+The first line will contain a response code which expresses whether the operation was successful. Additional lines may be present depending on the response code.
+
+Response Schema: text/plain
+One of TD_OKTD_EXISTSTD_WILDCARDTD_VERIFYTD_ERROR
+string (TD_OK)
+The attack was submitted to our system successfully. The second line of the response will give the ID number of the new takedown.
+
+TD_OK
+30480489
+403 Access denied.
+503 System maintenance.
+Request samples
+cURLPythonPython (with evidence)
+
+Copy
+# Report a phishing attack
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'region=example_region' \
+    --form 'attack=https://l0gin.examp1eb4nk.com/app/' \
+    --form 'type=phishing_url' \
+    --form 'comment=Phishing Site' \
+    https://takedown.netcraft.com/api/v1/report/
+
+# Report a dropsite attack
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'region=example_region' \
+    --form 'attack=https://drop.examp1eb4nk.com/creds/' \
+    --form 'type=dropsite' \
+    --form 'comment=HTML email sending credentials to a URL' \
+    --form 'dropsite=@/file/path/of/phishing/email.eml' \
+    https://takedown.netcraft.com/api/v1/report/
+
+# Report an AFF attack
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'region=example_region' \
+    --form 'attack=attacker@examp1eb4nk.com' \
+    --form 'type=advance_fee_fraud' \
+    --form 'comment=Fraudulent email address' \
+    --form 'evidence=@/file/path/of/email.eml' \
+    https://takedown.netcraft.com/api/v1/report/
+Existing Takedowns
+View Existing Takedowns
+
+get
+/attacks
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/get-info.php
+This endpoint returns a list of takedown objects that match your search criteria. There is a limit of 1,000,000 entries returned within a 24 hour period (moving time window) per email address.
+
+Authorizations:
+Bearer Auth
+query Parameters
+id	
+integer
+Filter to the takedown with the specified ID.
+
+group_id	
+integer
+Filter to all takedowns that share a group with the given takedown. You can specify the ID for any takedown within the group, as well as the group ID.
+
+id_after	
+integer
+Filter to takedowns on and after the specified takedown ID. This can be used to maintain a local copy of the attacks by making periodic requests and specifying the largest ID that you have already observed.
+
+When using this parameter we recommend that you also set the sort parameter to id to ensure that no results are missed.
+
+id_before	
+integer
+Filter to takedowns that were submitted before the specified takedown ID.
+
+date_from	
+string <date-time>
+Filter to takedowns that were submitted on or after the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_to	
+string <date-time>
+Filter to takedowns that were submitted on or before the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_range_preset	
+string
+Enum: "last_30_days" "last_3_months" "last_6_months" … 10 more
+Filter to takedowns that were submitted within the date range specified. This has no effect if either of date_from or date_to are provided. All ranges are inclusive, i.e. this_week runs fromMonday at 00:00:00 until Sunday at 23:59:59.
+
+last_30_days - Reported between 30 days ago and today.
+last_3_months - Reported between 3 months ago and today.
+last_6_months - Reported between 6 months ago and today.
+last_12_months - Reported between 12 months ago and today.
+this_week - Reported between Monday this week and Sunday this week.
+previous_week - Reported between Monday last week and Sunday last week.
+this_month - Reported between the first day of this month and the last day of this month.
+previous_month - Reported between the first day of last month and the last day of last month.
+this_fiscal_quarter - Reported between the first day of this quarter and and the last day of this quarter.
+previous_fiscal_quarter - Reported between the first day of the last quarter and the last day of the last quarter.
+this_year - Reported between the first day of this year and the last day of this year.
+previous_year - Reported between the first day of last year and the last day of last year.
+all_time - Reported at any time.
+updated_since	
+string <date-time>
+Filter to takedowns that have been updated since the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+stop_monitoring_date_from	
+string <date-time>
+Filter to takedowns where the system stopped monitoring the attack on or after the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+stop_monitoring_date_to	
+string <date-time>
+Filter to takedowns where the system stopped monitoring the attack on or before the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+auth_hours_more	
+integer
+Filter to takedowns that have been authorised for more than the given number of hours.
+
+auth_hours_less	
+integer
+Filter to takedowns that have been authorised for less than the given number of hours.
+
+auth_date_from	
+string <date-time>
+Filter to takedowns that were authorised on or after the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+auth_date_to	
+string <date-time>
+Filter to takedowns that were authorised on or before the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+esc_hours_more	
+integer
+Filter to takedowns that have been escalated for more than the given number of hours.
+
+esc_hours_less	
+integer
+Filter to takedowns that have been escalated for less than the given number of hours.
+
+esc_date_from	
+string <date-time>
+Filter to takedowns that were escalated on or after the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+esc_date_to	
+string <date-time>
+Filter to takedowns that were escalated on or before the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+url	
+string
+Filter by URL, email, hostname, domain or IP. Works the same way as the "Search by Attack" filter on the "View Attacks" page of the web interface.
+
+ip	
+string <ipv4>
+Filter to attacks that are hosted on the given IPv4 address, or within the given IPv4 CIDR range. Please note that partial IP addresses will not be matched.
+
+region	
+string
+Value: "dskbank"
+Filter to takedowns residing under the given region. If the provided region is invalid, or the parameter is not specified, then takedowns from all accessible regions will be shown.
+
+dskbank - DSK Bank AD
+reporter	
+string
+Enum: "customer" "netcraft"
+Filter to takedowns reported by the given entity. Defaults to all reporters.
+
+customer - Takedowns reported by you.
+netcraft - Takedowns reported by us.
+reporter_email	
+string
+Filter to takedowns that were reported by the given user.
+
+report_source	
+string
+Enum: "interface" "phish_feed" "referer" … 4 more
+Filter to takedowns that were reported through the given mechanism.
+
+interface - Reported using the Takedown web interface.
+phish_feed - Reported via the Netcraft Phishing Feed.
+referer - Reported via the Netcraft Referer Monitoring service.
+forensic - Reported from DMARC Forensic reports.
+api - Reported via the Takedown API.
+email_feed - Reported via the Netcraft Email Fraud Feed.
+fraud_detection - Reported via the Netcraft Fraud Detection service.
+statuses	
+Array of strings
+Items Enum: "unverified" "inactive_monitoring" "verified" … 7 more
+Filter to takedowns that are currently in the given status. Multiple values may be provided as a comma-separated list.
+
+unverified - The report has not yet been verified as fraudulent by Netcraft
+inactive_monitoring - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+contacted_hosting - Takedown notices have been sent to the hosting provider
+contacted_police - The takedown has been escalated to local law enforcement.
+contacted_upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+resolved_monitoring - The attack is offline, as is being monitored in case it returns.
+resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+invalid - The report is not a valid takedown target.
+target_brand	
+Array of strings
+Items Value: "dskbank"
+Filter to takedowns targeting the given brand. Multiple values may be provided as a comma-separated list.
+
+dskbank - DSK Bank
+attack_types	
+Array of strings
+Items Enum: "url" "email" "phone" … 180 more
+Filter to takedowns of the given attack type. Multiple values may be provided as a comma-separated list.
+
+You can find more information about the different attack types here.
+
+domain_attack	
+Array of strings
+Default: "all"
+Items Enum: "all" "yes" "yes_low_confidence" … 1 more
+Filter based on whether the domain name used in the attack is believed to be fraudulent. Multiple values may be provided as a comma-separated list.
+
+all - All attacks.
+yes - There is a high confidence that the domain name is fraudulent. The domain registrar will be contacted, and the webmaster will not be contacted.
+yes_low_confidence - The domain is likely fraudulent. The domain registrar will be contacted, and the webmaster will still be contacted.
+no - The domain name is not believed to be fraudulent, this is likely a compromised site.
+hostname_attack	
+Array of strings
+Default: "all"
+Items Enum: "all" "yes" "yes_low_confidence" … 1 more
+Filter based on whether the hostname used in the attack is believed to be fraudulent. Multiple values may be provided as a comma-separated list.
+
+all - All attacks.
+yes - There is a high confidence that the hostname is fraudulent. The Certificate Authority will be contacted.
+yes_low_confidence - The hostname is likely fraudulent.
+no - The hostname is not believed to be fraudulent, this is likely a compromised site.
+false_positive	
+boolean
+Filter to takedowns which have been incorrectly marked as malicious.
+
+auth_given_only	
+integer
+Deprecated
+Value: 1
+This option has been deprecated in favour of authgiven.
+
+When present, will filter to takedowns which have been authorised.
+
+authgiven	
+string
+Enum: "yes" "yes:customer" "yes:netcraft" … 1 more
+Filter based on whether a takedown has been authorised.
+
+yes - The takedown has been authorised.
+yes:customer - The takedown has been authorised by you.
+yes:netcraft - The takedown has been authorised by Netcraft.
+no - The takedown has not been authorised.
+escalated	
+string
+Enum: "yes" "yes:customer" "yes:netcraft" … 1 more
+Filter based on whether a takedown has been escalated.
+
+yes - The takedown has been escalated.
+yes:customer - The takedown has been escalated by you.
+yes:netcraft - The takedown has been escalated by Netcraft.
+no - The takedown has not been escalated.
+phishkit_only	
+integer
+Value: 1
+When present, only show attacks which have an associated phishing kit.
+
+phishkit_hashes_only	
+integer
+Value: 1
+When present, returns a list of distinct phishkit_hashes matching the current filters, instead of returning the list of matching takedowns. Implies phishkit_only=1.
+
+customer_label	
+string
+Filter to takedowns with the given customer label. This label is a free-text field which can be provided when reporting an attack.
+
+language	
+string
+Filter to attacks with the given language code.
+
+hoster	
+string
+Filter to takedowns based on the name of the organisation hosting the attack.
+
+registrar	
+string
+Filter to takedowns based on the name of the domain registrar of the attack.
+
+tags	
+Array of strings
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+Filter to takedowns with the given tags. All tags must be applied to a takedown for it to be returned. Multiple values may be provided as a comma-separated list. The tags and exclude_tags parameters cannot both be used at once.
+
+You can find more information about tagging attacks here.
+
+exclude_tags	
+Array of strings
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+Filter to takedowns without the given tags. None of the tags must be applied to a takedown for it to be returned. Multiple values may be provided as a comma-separated list. The tags and exclude_tags parameters cannot both be used at once.
+
+You can find more information about tagging attacks here.
+
+auto	
+string
+Deprecated
+Enum: "automated" "managed"
+Deprecated. Use service_type instead.
+
+service_type	
+Array of strings
+Items Enum: "automated" "managed" "default"
+Filter based on the service type of the takedown. Takedowns matching any of the provided service types are returned.
+
+automated - The takedown is being conducted under an automated service.
+managed - The takedown is being conducted under a managed service.
+default - The takedown is being conducted under the default service.
+date_format	
+string
+Default: "default"
+Enum: "default" "iso8601" "rfc2822" … 1 more
+Used to modify the format that the API should return date-time values in
+
+default - YYYY-MM-DD HH:MM:SS Timezone
+iso8601 - ISO 8601 format.
+rfc2822 - RFC 2822 format.
+unix - Unix timestamp, i.e. the number of seconds since the Unix epoch (1970-10-01 00:00:00 UTC).
+sort	
+string
+Default: "status"
+Enum: "authgiven" "customer_label" "date_submitted" … 7 more
+Specify the key that the list of takedowns should be sorted by.
+
+authgiven - Sort by whether the takedown has been authorised.
+customer_label - Sort by the customer label provided with the report.
+date_submitted - Sort by the date and time that the takedown was submitted.
+hoster - Sort by the name of the organisation hosting the attack.
+id - Sort by the ID of the takedown.
+ip - Sort by the IPv4 address of the attack.
+language - Sort by the language code of the language used in the attack.
+last_updated - Sort by the date and time of the last action on a takedown.
+registrar - Sort by the name of the domain registrar for the attack.
+status - Sort by the current status of the takedown.
+dir	
+string
+Default: "asc"
+Enum: "asc" "desc"
+Specify the direction of the sort parameter. Defaults to asc unless a sort value of authgiven, last_updated or date_submitted is used.
+
+asc - Sort results in ascending order (smallest to largest).
+desc - Sort results in descending order (largest to smallest).
+max_results	
+integer <= 100000
+Limit the number of results returned by the API.
+
+has_certificate	
+integer
+Enum: 0 1
+Filter attacks based on whether a valid SSL certificate was found.
+
+response_include	
+Array of strings
+A comma-separated list of property names to include for each takedown. Any property not in this list will be excluded.
+
+response_exclude	
+Array of strings
+A comma-separated list of property names to exclude for each takedown. If the property name is also present in response_include, exclusion will take precedence.
+
+provide_whois	
+integer
+Value: 1
+When present, the WHOIS data for the attack will be included in the response. Enabling this option may greatly increase the size of the API response. Take care if you are performing queries that return a large number of results.
+
+num_screenshots	
+integer >= 1
+Default: 1
+Controls the maximum number of URLs returned in the screenshot_url field.
+
+is_redirect	
+string
+Enum: "final" "redirect" "no_redirect"
+Filter attacks based on whether they redirect to another location.
+
+final - The attack is the final destination of another redirect.
+redirect - The attack redirects to another location.
+no_redirect - The attack does not redirect.
+waiting_for_customer	
+string
+Enum: "no" "yes" "yes_other" … 6 more
+Filter takedowns based on whether they are waiting for any actions to be taken by the customer. Please note that we may add values to this field without warning, but that these will begin yes_.
+
+no - The takedown is not waiting for any actions to be taken. Note that certain actions, such as authorisation, are not covered by this state.
+yes - This takedown requires one or more actions to be taken by you before it can proceed. This meta-category is used to filter to any attack with a reason other than "Not waiting for customer" or "Excluded by customer".
+yes_other - This takedown requires one or more actions to be taken by you before it can proceed. This category is nonspecific so please check the notes to see what actions are required.
+yes_loa - This takedown requires a Proof of Agent document, also known as a Letter of Authorisation, to be uploaded by you before it can proceed. This is because a provider requires evidence that Netcraft acts on your behalf. Please email this document to support@netcraft.com for us to process.
+yes_trademarks - This takedown requires a Trademark Registration Certificate to be uploaded by you before it can proceed. This is because a provider requires evidence that you hold the trademarks being infringed. Please email this document to support@netcraft.com for us to process.
+yes_evidence - This takedown requires evidence of the malicious content to be uploaded by you before it can proceed. Please check the notes for further details.
+yes_business - This takedown requires a Proof of Business document to be uploaded by you before it can proceed. This is because a provider requires evidence that the affected entity is a legitimate business. Please email this document to support@netcraft.com for us to process.
+yes_own_site - We suspect this resource could be owned or controlled by you, so continuing to take it down could result in a false positive. Please investigate whether this is a legitimate resource that you own or control, and add a note to this takedown letting us know the result of the investigation.
+yes_but_excluded - You were required to take an action for this takedown, but you indicated that the action could not be completed.
+Responses
+200 A list of takedown objects matching your search criteria.
+Response Schema: application/json
+Array (<= 100000 items)
+id
+required
+integer
+The ID of the takedown.
+
+group_id
+required
+integer
+Default: ""
+The ID of the group that the takedown belongs to. Can potentially be the same as id, or empty if there is no group.
+
+attack_url
+required
+string <url>
+The location of the attack being taken down. This field contains a canonicalised value. See the reported_url field for the exact location that was reported to takedown.
+
+reported_url
+required
+string <url>
+The location of the attack as reported to takedown. See the attack_url field for the formatted location of the attack being taken down.
+
+ip
+required
+string <ipv4>
+Default: ""
+The IPv4 address of the attack.
+
+domain
+required
+string <domain>
+Default: ""
+The domain of the URL or email address being taken down. This will be blank for attacks with no domain name.
+
+hostname
+required
+string <hostname>
+Default: ""
+The full hostname of the URL or email address being taken down. This will be blank for attacks with no hostname.
+
+attack_type
+required
+string
+Enum: "url" "email" "phone" … 180 more
+The type of attack being taken down.
+
+You can find more information about the different attack types here.
+
+country_code
+required
+string
+Default: ""
+ISO country code of the advertised hosting location.
+
+reporter
+required
+string
+The person/account that submitted the takedown. This will be the email address of the user, or "netcraft" for any reports made by us.
+
+report_source
+required
+string
+Enum: "Takedown Interface" "Phishing Feed" "Referrer Monitoring" … 4 more
+The method through which the takedown was submitted.
+
+Takedown Interface - Reported using the Takedown web interface.
+Phishing Feed - Reported via the Netcraft Phishing Feed.
+Referrer Monitoring - Reported via the Netcraft Referer Monitoring service.
+DMARC Forensic Reports - Reported from DMARC Forensic reports.
+Takedown API - Reported via the Takedown API.
+Email Fraud Feed - Reported via the Netcraft Email Fraud Feed.
+Fraud Detection - Reported via the Netcraft Fraud Detection service.
+date_submitted
+required
+string <date-time>
+The date and time that the takedown was reported, in UTC.
+
+date_authed
+required
+string <date-time>
+Default: ""
+The date and time that the takedown was authorised, in UTC.
+
+last_updated
+required
+string <date-time>
+The date and time of the last action taken on the takedown, in UTC.
+
+stop_monitoring_date
+required
+string <date-time>
+Default: ""
+The date and time that the takedown system stopped monitoring the attack, in UTC. If the attack is still being monitored, an empty string is given.
+
+description
+required
+string
+Default: ""
+The description of the takedown.
+
+region
+required
+string
+Value: "dskbank"
+The name of the area that the takedown resides in.
+
+dskbank - DSK Bank AD
+target_brand
+required
+string
+Value: "DSK Bank"
+The name of the brand being targeted by the attack.
+
+status
+required
+string
+Enum: "Unverified" "Inactive (Monitoring)" "Verified" … 7 more
+The status of the takedown.
+
+Unverified - The report has not yet been verified as fraudulent by Netcraft
+Inactive (Monitoring) - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+Verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+Contacted Hosting - Takedown notices have been sent to the hosting provider
+Contacted Police - The takedown has been escalated to local law enforcement.
+Contacted Upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+Monitoring - The attack is offline, as is being monitored in case it returns.
+Resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+Stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+Invalid - The report is not a valid takedown target.
+authgiven
+required
+string
+"1" if the takedown has been authorised, "0" otherwise.
+
+authorisation_source
+required
+string
+Default: ""
+Enum: "customer" "netcraft"
+The source of authorisation for the takedown. Will be blank if the takedown has not been authorised.
+
+customer - The takedown was authorised by you.
+netcraft - The takedown was authorised by Netcraft.
+escalated
+required
+string
+"1" if the takedown has been escalated, "0" otherwise.
+
+escalation_source
+required
+string
+Default: ""
+Enum: "customer" "netcraft"
+The source of escalation for the takedown. Will be blank if the takedown has not been escalated.
+
+customer - The takedown was escalated by you.
+netcraft - The takedown was escalated by Netcraft.
+fwd_owner
+required
+string
+Default: "[unknown]"
+The owner of the forward DNS infrastructure.
+
+rev_owner
+required
+string
+Default: "[unknown]"
+The owner of the reverse DNS infrastructure.
+
+reverse_dns
+required
+string
+Default: ""
+The output of a reverse DNS lookup on the IP of the attack.
+
+host
+required
+string
+Default: "Unknown"
+The name of the company responsible for the IP address.
+
+registrar
+required
+string
+Default: "Unknown"
+The name of the registrar responsible for the domain name used in the attack.
+
+whois_server
+required
+string
+Default: ""
+The address of the WHOIS server used to query the attack domain.
+
+false_positive
+required
+boolean
+Boolean indicating whether the reported content was incorrectly flagged as malicious.
+
+first_contact
+required
+string <date-time>
+Default: ""
+The date and time that the takedown first entered a contacted state, in UTC.
+
+first_inactive
+required
+string <date-time>
+Default: ""
+The date and time that the takedown first entered the Inactive (Monitoring) state, in UTC.
+
+first_resolved
+required
+string <date-time>
+Default: ""
+The date and time that the attack first went offline, in UTC.
+
+final_resolved
+required
+string <date-time>
+Default: ""
+The date and time that the attack went offline for the final time, in UTC.
+
+first_outage
+required
+string <duration>
+Default: ""
+The duration (HH:MM:SS) between when the takedown was authorised, and the first time that the attack went offline (first_resolved - date_authed).
+
+final_outage
+required
+string <duration>
+Default: ""
+The duration (HH:MM:SS) between when the takedown was authorised, and the final time that the attack went offline (final_resolved - date_authed).
+
+status_change_uptime
+required
+string <duration>
+Default: ""
+The total duration (HH:MM:SS) that the attack was available for after authorisation, as determined by the takedown status changes. i.e. the total amount of time since authorisation that an attack was not in the Resolved or Resolved (Monitoring) state.
+
+language
+required
+string
+Default: ""
+The language used in the attack (if it can be determined).
+
+has_phishing_kit
+required
+string
+"1" if the takedown has an associated phishing kit, "0" otherwise.
+
+domain_attack
+required
+string
+Enum: "all" "yes" "yes_low_confidence" … 1 more
+Whether or not the domain name used in the attack is believed to be fraudulent.
+
+all - All attacks.
+yes - There is a high confidence that the domain name is fraudulent. The domain registrar will be contacted, and the webmaster will not be contacted.
+yes_low_confidence - The domain is likely fraudulent. The domain registrar will be contacted, and the webmaster will still be contacted.
+no - The domain name is not believed to be fraudulent, this is likely a compromised site.
+hostname_attack
+required
+string
+Enum: "all" "yes" "yes_low_confidence" … 1 more
+Whether or not the hostname used in the attack is believed to be fraudulent.
+
+all - All attacks.
+yes - There is a high confidence that the hostname is fraudulent. The Certificate Authority will be contacted.
+yes_low_confidence - The hostname is likely fraudulent.
+no - The hostname is not believed to be fraudulent, this is likely a compromised site.
+evidence_url
+required
+string <url>
+Default: ""
+A URL to the public incident report for this attack.
+
+screenshot_url
+required
+string or Array of strings
+Default: ""
+The URL(s) at which a screenshot of the attack can be found. The type of the returned value and the number of URLs returned can be controlled by the num_screenshots parameter. When returning a single URL as a string (the default behaviour) the returned URL will be the best guess of the screenshot which displays the live attack. When returning multiple URLs, the list will be sorted by the time the screenshot was requested, with the earliest first.
+
+targeted_url
+required
+string <url>
+Default: ""
+The URL which this attack is masquerading as, e.g. the URL of the legitimate login form that a phishing attack is targeting.
+
+phishing_kit_hash
+required
+Array of strings <sha1-hex>
+Default: []
+The SHA1 hashes of all phishing kits available for download which are related to this takedown. The hashes can be provided to the Phishing Kit API using the kit_hash parameter to download the phishing kit.
+
+certificate
+required
+object
+Default: []
+HTTPS certificate details for the hostname. The value returned is similar to the output of PHP's openssl_x509_parse function, with the additional keys spki_sha256 and spki_sha1, and with binary extensions encoded as Base64. The structure of this field is subject to change.
+
+certificate_revoked
+required
+string <date-time>
+Default: "Not revoked"
+If the SSL certificate has been revoked, then the date this was detected (in UTC) is returned, else "Not revoked" is returned.
+
+whois_data	
+string
+The WHOIS data for the takedown. Set this in response_include as an alternative to the provide_whois flag. Note that returning the WHOIS data may greatly increase the size of the response - be careful when enabling this if you are requesting large numbers of results.
+
+customer_tag
+required
+string
+Deprecated
+Default: ""
+Deprecated. Use customer_label instead.
+
+customer_label
+required
+string
+Default: ""
+A custom field which may be provided along with the takedown report.
+
+managed
+required
+boolean
+Deprecated
+Deprecated. Use service_type instead.
+
+service_type	
+string or null
+Enum: "automated" "managed" "default"
+The service type the takedown is being performed under.
+
+automated - The takedown is being conducted under an automated service.
+managed - The takedown is being conducted under a managed service.
+default - The takedown is being conducted under the default service.
+date_escalated
+required
+string <date-time>
+Default: ""
+The date and time that the takedown entered the managed state, in UTC.
+
+date_first_actioned
+required
+string <date-time>
+Default: ""
+The date and time of the first action taken by Netcraft after the takedown was reported, in UTC. This is calculated as the first time that the takedown was moved out of the "Unverified" status.
+
+tags
+required
+Array of strings
+Default: []
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+List of tags applied to the group.
+
+You can find more information about tagging attacks here.
+
+domain_risk_rating
+required
+integer
+Default: 0
+A score from 0 to 10 which represents the risk that the domain is hosting a malicious website. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the risk rating for examp1eb4nk.com. This score is distinct from our "Deceptive Domain Score", and takes a range of factors into account, such as the reputation of the hosting provider, age of the domain name, search engine rankings and more.
+
+site_risk_rating
+required
+integer
+Default: 0
+A score from 0 to 10 which represents the risk that the hostname is hosting a malicious website. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the risk rating for l0gin.examp1eb4nk.com. This score is distinct from our "Deceptive Domain Score", and takes a range of factors into account, such as the reputation of the hosting provider, age of the domain name, search engine rankings and more.
+
+deceptive_domain_score
+required
+number <float>
+Default: 0
+The Deceptive Domain Score of the domain. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the Deceptive Domain Score for examp1eb4nk.com. You can find out more about how this score is calculated here.
+
+hostname_ddss_score
+required
+number <float>
+Default: 0
+The Deceptive Domain Score of the hostname. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the Deceptive Domain Score for l0gin.examp1eb4nk.com. You can find out more about how this score is calculated here.
+
+malware_category
+required
+string
+Default: ""
+The category of malware detected. Only set for malware attack types. May be empty if a category cannot be determined.
+
+malware_family
+required
+string
+Default: ""
+The family of malware detected. Only set for malware attack types. May be empty if a family cannot be determined.
+
+restart_date
+required
+string <date-time>
+Default: ""
+The latest date and time, in UTC, that the takedown was restarted, i.e. went from the "Resolved (Monitoring)" status to a Contacted status. Will be empty if the takedown has never been restarted.
+
+is_redirect	
+string
+Enum: "final" "redirect" "no_redirect"
+Whether or not the attack redirects to another location.
+
+final - The attack is the final destination of another redirect.
+redirect - The attack redirects to another location.
+no_redirect - The attack does not redirect.
+gsb_block_status
+required
+Array of objects[ items ]
+Default: []
+An array of objects containing the browser blocking status on all platforms: Google Safe Browsing on (iOS, Android, Desktop), and the Microsoft SmartScreen browser extension.Will be an empty array if we haven't tested the browser block status for the takedown. This field is named gsb_block_status for historic reasons, it now includes block details from a multitude of platforms
+
+gsb_first_blocked	
+Array of objects[ items ]
+Default: []
+An array of objects containing the first time that the URL was seen to be blocked on a given platform by Netcraft. Will be an empty array if the URL was not seen blocked on any platform.
+
+impersonation_targets	
+Array of objects[ items ]
+Default: []
+List of impersonation target names and roles for the takedown.
+
+waiting_for_customer
+required
+string
+Default: "no"
+Enum: "no" "yes_other" "yes_loa" … 5 more
+Whether the takedown is waiting for any actions to be taken by the customer. Please note when consuming this field that we may add values without warning, but that these will begin yes_.
+
+no - The takedown is not waiting for any actions to be taken. Note that certain actions, such as authorisation, are not covered by this state.
+yes_other - This takedown requires one or more actions to be taken by you before it can proceed. This category is nonspecific so please check the notes to see what actions are required.
+yes_loa - This takedown requires a Proof of Agent document, also known as a Letter of Authorisation, to be uploaded by you before it can proceed. This is because a provider requires evidence that Netcraft acts on your behalf. Please email this document to support@netcraft.com for us to process.
+yes_trademarks - This takedown requires a Trademark Registration Certificate to be uploaded by you before it can proceed. This is because a provider requires evidence that you hold the trademarks being infringed. Please email this document to support@netcraft.com for us to process.
+yes_evidence - This takedown requires evidence of the malicious content to be uploaded by you before it can proceed. Please check the notes for further details.
+yes_business - This takedown requires a Proof of Business document to be uploaded by you before it can proceed. This is because a provider requires evidence that the affected entity is a legitimate business. Please email this document to support@netcraft.com for us to process.
+yes_own_site - We suspect this resource could be owned or controlled by you, so continuing to take it down could result in a false positive. Please investigate whether this is a legitimate resource that you own or control, and add a note to this takedown letting us know the result of the investigation.
+yes_but_excluded - You were required to take an action for this takedown, but you indicated that the action could not be completed.
+incident_report
+required
+string <url>
+Default: ""
+Incident V2 report url for the takedown. Will be empty if no report has been generated.
+
+false_positive_info
+required
+object
+Default: null
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+480 The arguments that you have passed would have returned more than the maximum limit of 100,000 results.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View a specific takedown
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'id=30480489' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns in a group
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'group_id=30480489' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns of type "Phishing URL"
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'attack_types=phishing_url' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns matching a specific label
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'customer_label=My Custom Label' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns reported after the given ID
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'id_after=30480489' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns updated within the last hour
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'updated_since=1 hour ago' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all active takedowns submitted within the last 12 months
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'date_from=12 months ago' \
+    --data-urlencode 'statuses=verified,contacted_hosting,contacted_police,contacted_upstream' \
+    --data-urlencode 'authgiven=yes' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all active Phishing URL takedowns under the default service type submitted by you in the last 2 weeks
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'date_from=2 weeks ago' \
+    --data-urlencode 'statuses=verified,contacted_hosting,contacted_police,contacted_upstream' \
+    --data-urlencode 'authgiven=yes' \
+    --data-urlencode 'attack_types=phishing_url' \
+    --data-urlencode 'service_type=default' \
+    --data-urlencode 'reporter=customer' \
+    https://takedown.netcraft.com/api/v1/attacks/
+Response samples
+200400403480500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"id": "30480489",
+"group_id": "30480489",
+"attack_url": "https://l0gin.examp1eb4nk.com/app/",
+"reported_url": "https://l0gin.examp1eb4nk.com/app/",
+"ip": "192.0.2.1",
+"domain": "examp1eb4nk.com",
+"hostname": "l0gin.examp1eb4nk.com",
+"attack_type": "phishing_url",
+"country_code": "us",
+"reporter": "user@examplebank.com",
+"report_source": "Takedown Interface",
+"date_submitted": "2025-07-18 14:46:53 UTC",
+"date_authed": "2025-07-18 14:56:53 UTC",
+"last_updated": "2025-07-18 15:41:53 UTC",
+"stop_monitoring_date": "",
+"description": "",
+"region": "example_region",
+"target_brand": "Example Brand",
+"status": "Monitoring",
+"authgiven": "\"1\"",
+"authorisation_source": "netcraft",
+"escalated": "1",
+"escalation_source": "",
+"fwd_owner": "exampleregistrar.com",
+"rev_owner": "examplehost.com",
+"reverse_dns": "192-0-2-1.examplehost.com",
+"host": "Example Host",
+"registrar": "Example Registrar",
+"whois_server": "whois.exampleregistrar.com",
+"false_positive": false,
+"first_contact": "2025-07-18 14:51:53 UTC",
+"first_inactive": "",
+"first_resolved": "2025-07-18 15:31:53 UTC",
+"final_resolved": "2025-07-18 15:41:53 UTC",
+"first_outage": "00:35:00",
+"final_outage": "00:45:00",
+"status_change_uptime": "00:40:00",
+"language": "english",
+"has_phishing_kit": "1",
+"domain_attack": "yes",
+"hostname_attack": "yes_low_confidence",
+"evidence_url": "https://incident.netcraft.com/1b24dexample/",
+"screenshot_url": "https://screenshot.netcraft.com/images/archive/<date>/s3e93b5d93ed97ebd2c3d0876dae9b57.png",
+"targeted_url": "https://examplebank.com/",
+"phishing_kit_hash": [
+"2818a25d2f839c3e0608f00af34bb98ca2571c74"
+],
+"certificate": [ ],
+"certificate_revoked": "2025-07-18 15:26:53 UTC",
+"whois_data": "string",
+"customer_tag": "",
+"customer_label": "Internal Issue #12345",
+"managed": false,
+"service_type": "automated",
+"date_escalated": "",
+"date_first_actioned": "2025-07-18 14:53:53 UTC",
+"tags": [ ],
+"domain_risk_rating": 10,
+"site_risk_rating": 9,
+"deceptive_domain_score": 9.85,
+"hostname_ddss_score": 8.25,
+"malware_category": "",
+"malware_family": "",
+"restart_date": "",
+"is_redirect": "final",
+"gsb_block_status": [
+{},
+{},
+{},
+{}
+],
+"gsb_first_blocked": [
+{},
+{},
+{},
+{}
+],
+"impersonation_targets": [
+{},
+{}
+],
+"waiting_for_customer": "yes_other",
+"incident_report": "",
+"false_positive_info": {
+"cause": "The website was misclassified due to bad logic in our classification system.",
+"source": "A false positive report was received from a customer.",
+"timestamp": "2025-07-18 15:21:53 UTC",
+"impact": "The takedown was never completed, so the site was not affected.",
+"remediation": "We have sent a follow up email to the parties that we originally contacted requesting that our original report is disregarded."
+}
+}
+]
+View Existing Takedowns
+
+post
+/attacks
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/get-info.php
+This endpoint returns a list of takedown objects that match your search criteria. There is a limit of 1,000,000 entries returned within a 24 hour period (moving time window) per email address.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+id	
+integer
+Filter to the takedown with the specified ID.
+
+group_id	
+integer
+Filter to all takedowns that share a group with the given takedown. You can specify the ID for any takedown within the group, as well as the group ID.
+
+id_after	
+integer
+Filter to takedowns on and after the specified takedown ID. This can be used to maintain a local copy of the attacks by making periodic requests and specifying the largest ID that you have already observed.
+
+When using this parameter we recommend that you also set the sort parameter to id to ensure that no results are missed.
+
+id_before	
+integer
+Filter to takedowns that were submitted before the specified takedown ID.
+
+date_from	
+string <date-time>
+Filter to takedowns that were submitted on or after the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_to	
+string <date-time>
+Filter to takedowns that were submitted on or before the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_range_preset	
+string
+Enum: "last_30_days" "last_3_months" "last_6_months" … 10 more
+Filter to takedowns that were submitted within the date range specified. This has no effect if either of date_from or date_to are provided. All ranges are inclusive, i.e. this_week runs fromMonday at 00:00:00 until Sunday at 23:59:59.
+
+last_30_days - Reported between 30 days ago and today.
+last_3_months - Reported between 3 months ago and today.
+last_6_months - Reported between 6 months ago and today.
+last_12_months - Reported between 12 months ago and today.
+this_week - Reported between Monday this week and Sunday this week.
+previous_week - Reported between Monday last week and Sunday last week.
+this_month - Reported between the first day of this month and the last day of this month.
+previous_month - Reported between the first day of last month and the last day of last month.
+this_fiscal_quarter - Reported between the first day of this quarter and and the last day of this quarter.
+previous_fiscal_quarter - Reported between the first day of the last quarter and the last day of the last quarter.
+this_year - Reported between the first day of this year and the last day of this year.
+previous_year - Reported between the first day of last year and the last day of last year.
+all_time - Reported at any time.
+updated_since	
+string <date-time>
+Filter to takedowns that have been updated since the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+stop_monitoring_date_from	
+string <date-time>
+Filter to takedowns where the system stopped monitoring the attack on or after the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+stop_monitoring_date_to	
+string <date-time>
+Filter to takedowns where the system stopped monitoring the attack on or before the date/time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+auth_hours_more	
+integer
+Filter to takedowns that have been authorised for more than the given number of hours.
+
+auth_hours_less	
+integer
+Filter to takedowns that have been authorised for less than the given number of hours.
+
+auth_date_from	
+string <date-time>
+Filter to takedowns that were authorised on or after the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+auth_date_to	
+string <date-time>
+Filter to takedowns that were authorised on or before the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+esc_hours_more	
+integer
+Filter to takedowns that have been escalated for more than the given number of hours.
+
+esc_hours_less	
+integer
+Filter to takedowns that have been escalated for less than the given number of hours.
+
+esc_date_from	
+string <date-time>
+Filter to takedowns that were escalated on or after the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+esc_date_to	
+string <date-time>
+Filter to takedowns that were escalated on or before the given date/time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+url	
+string
+Filter by URL, email, hostname, domain or IP. Works the same way as the "Search by Attack" filter on the "View Attacks" page of the web interface.
+
+ip	
+string <ipv4>
+Filter to attacks that are hosted on the given IPv4 address, or within the given IPv4 CIDR range. Please note that partial IP addresses will not be matched.
+
+region	
+string
+Value: "dskbank"
+Filter to takedowns residing under the given region. If the provided region is invalid, or the parameter is not specified, then takedowns from all accessible regions will be shown.
+
+dskbank - DSK Bank AD
+reporter	
+string
+Enum: "customer" "netcraft"
+Filter to takedowns reported by the given entity. Defaults to all reporters.
+
+customer - Takedowns reported by you.
+netcraft - Takedowns reported by us.
+reporter_email	
+string
+Filter to takedowns that were reported by the given user.
+
+report_source	
+string
+Enum: "interface" "phish_feed" "referer" … 4 more
+Filter to takedowns that were reported through the given mechanism.
+
+interface - Reported using the Takedown web interface.
+phish_feed - Reported via the Netcraft Phishing Feed.
+referer - Reported via the Netcraft Referer Monitoring service.
+forensic - Reported from DMARC Forensic reports.
+api - Reported via the Takedown API.
+email_feed - Reported via the Netcraft Email Fraud Feed.
+fraud_detection - Reported via the Netcraft Fraud Detection service.
+statuses	
+Array of strings
+Items Enum: "unverified" "inactive_monitoring" "verified" … 7 more
+Filter to takedowns that are currently in the given status. Multiple values may be provided as a comma-separated list.
+
+unverified - The report has not yet been verified as fraudulent by Netcraft
+inactive_monitoring - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+contacted_hosting - Takedown notices have been sent to the hosting provider
+contacted_police - The takedown has been escalated to local law enforcement.
+contacted_upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+resolved_monitoring - The attack is offline, as is being monitored in case it returns.
+resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+invalid - The report is not a valid takedown target.
+target_brand	
+Array of strings
+Items Value: "dskbank"
+Filter to takedowns targeting the given brand. Multiple values may be provided as a comma-separated list.
+
+dskbank - DSK Bank
+attack_types	
+Array of strings
+Items Enum: "url" "email" "phone" … 180 more
+Filter to takedowns of the given attack type. Multiple values may be provided as a comma-separated list.
+
+You can find more information about the different attack types here.
+
+domain_attack	
+Array of strings
+Default: "all"
+Items Enum: "all" "yes" "yes_low_confidence" … 1 more
+Filter based on whether the domain name used in the attack is believed to be fraudulent. Multiple values may be provided as a comma-separated list.
+
+all - All attacks.
+yes - There is a high confidence that the domain name is fraudulent. The domain registrar will be contacted, and the webmaster will not be contacted.
+yes_low_confidence - The domain is likely fraudulent. The domain registrar will be contacted, and the webmaster will still be contacted.
+no - The domain name is not believed to be fraudulent, this is likely a compromised site.
+hostname_attack	
+Array of strings
+Default: "all"
+Items Enum: "all" "yes" "yes_low_confidence" … 1 more
+Filter based on whether the hostname used in the attack is believed to be fraudulent. Multiple values may be provided as a comma-separated list.
+
+all - All attacks.
+yes - There is a high confidence that the hostname is fraudulent. The Certificate Authority will be contacted.
+yes_low_confidence - The hostname is likely fraudulent.
+no - The hostname is not believed to be fraudulent, this is likely a compromised site.
+false_positive	
+boolean
+Filter to takedowns which have been incorrectly marked as malicious.
+
+auth_given_only	
+integer
+Deprecated
+Value: 1
+This option has been deprecated in favour of authgiven.
+
+When present, will filter to takedowns which have been authorised.
+
+authgiven	
+string
+Enum: "yes" "yes:customer" "yes:netcraft" … 1 more
+Filter based on whether a takedown has been authorised.
+
+yes - The takedown has been authorised.
+yes:customer - The takedown has been authorised by you.
+yes:netcraft - The takedown has been authorised by Netcraft.
+no - The takedown has not been authorised.
+escalated	
+string
+Enum: "yes" "yes:customer" "yes:netcraft" … 1 more
+Filter based on whether a takedown has been escalated.
+
+yes - The takedown has been escalated.
+yes:customer - The takedown has been escalated by you.
+yes:netcraft - The takedown has been escalated by Netcraft.
+no - The takedown has not been escalated.
+phishkit_only	
+integer
+Value: 1
+When present, only show attacks which have an associated phishing kit.
+
+phishkit_hashes_only	
+integer
+Value: 1
+When present, returns a list of distinct phishkit_hashes matching the current filters, instead of returning the list of matching takedowns. Implies phishkit_only=1.
+
+customer_label	
+string
+Filter to takedowns with the given customer label. This label is a free-text field which can be provided when reporting an attack.
+
+language	
+string
+Filter to attacks with the given language code.
+
+hoster	
+string
+Filter to takedowns based on the name of the organisation hosting the attack.
+
+registrar	
+string
+Filter to takedowns based on the name of the domain registrar of the attack.
+
+tags	
+Array of strings
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+Filter to takedowns with the given tags. All tags must be applied to a takedown for it to be returned. Multiple values may be provided as a comma-separated list. The tags and exclude_tags parameters cannot both be used at once.
+
+You can find more information about tagging attacks here.
+
+exclude_tags	
+Array of strings
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+Filter to takedowns without the given tags. None of the tags must be applied to a takedown for it to be returned. Multiple values may be provided as a comma-separated list. The tags and exclude_tags parameters cannot both be used at once.
+
+You can find more information about tagging attacks here.
+
+auto	
+string
+Deprecated
+Enum: "automated" "managed"
+Deprecated. Use service_type instead.
+
+service_type	
+Array of strings
+Items Enum: "automated" "managed" "default"
+Filter based on the service type of the takedown. Takedowns matching any of the provided service types are returned.
+
+automated - The takedown is being conducted under an automated service.
+managed - The takedown is being conducted under a managed service.
+default - The takedown is being conducted under the default service.
+date_format	
+string
+Default: "default"
+Enum: "default" "iso8601" "rfc2822" … 1 more
+Used to modify the format that the API should return date-time values in
+
+default - YYYY-MM-DD HH:MM:SS Timezone
+iso8601 - ISO 8601 format.
+rfc2822 - RFC 2822 format.
+unix - Unix timestamp, i.e. the number of seconds since the Unix epoch (1970-10-01 00:00:00 UTC).
+sort	
+string
+Default: "status"
+Enum: "authgiven" "customer_label" "date_submitted" … 7 more
+Specify the key that the list of takedowns should be sorted by.
+
+authgiven - Sort by whether the takedown has been authorised.
+customer_label - Sort by the customer label provided with the report.
+date_submitted - Sort by the date and time that the takedown was submitted.
+hoster - Sort by the name of the organisation hosting the attack.
+id - Sort by the ID of the takedown.
+ip - Sort by the IPv4 address of the attack.
+language - Sort by the language code of the language used in the attack.
+last_updated - Sort by the date and time of the last action on a takedown.
+registrar - Sort by the name of the domain registrar for the attack.
+status - Sort by the current status of the takedown.
+dir	
+string
+Default: "asc"
+Enum: "asc" "desc"
+Specify the direction of the sort parameter. Defaults to asc unless a sort value of authgiven, last_updated or date_submitted is used.
+
+asc - Sort results in ascending order (smallest to largest).
+desc - Sort results in descending order (largest to smallest).
+max_results	
+integer <= 100000
+Limit the number of results returned by the API.
+
+has_certificate	
+integer
+Enum: 0 1
+Filter attacks based on whether a valid SSL certificate was found.
+
+response_include	
+Array of strings
+A comma-separated list of property names to include for each takedown. Any property not in this list will be excluded.
+
+response_exclude	
+Array of strings
+A comma-separated list of property names to exclude for each takedown. If the property name is also present in response_include, exclusion will take precedence.
+
+provide_whois	
+integer
+Value: 1
+When present, the WHOIS data for the attack will be included in the response. Enabling this option may greatly increase the size of the API response. Take care if you are performing queries that return a large number of results.
+
+num_screenshots	
+integer >= 1
+Default: 1
+Controls the maximum number of URLs returned in the screenshot_url field.
+
+is_redirect	
+string
+Enum: "final" "redirect" "no_redirect"
+Filter attacks based on whether they redirect to another location.
+
+final - The attack is the final destination of another redirect.
+redirect - The attack redirects to another location.
+no_redirect - The attack does not redirect.
+waiting_for_customer	
+string
+Enum: "no" "yes" "yes_other" … 6 more
+Filter takedowns based on whether they are waiting for any actions to be taken by the customer. Please note that we may add values to this field without warning, but that these will begin yes_.
+
+no - The takedown is not waiting for any actions to be taken. Note that certain actions, such as authorisation, are not covered by this state.
+yes - This takedown requires one or more actions to be taken by you before it can proceed. This meta-category is used to filter to any attack with a reason other than "Not waiting for customer" or "Excluded by customer".
+yes_other - This takedown requires one or more actions to be taken by you before it can proceed. This category is nonspecific so please check the notes to see what actions are required.
+yes_loa - This takedown requires a Proof of Agent document, also known as a Letter of Authorisation, to be uploaded by you before it can proceed. This is because a provider requires evidence that Netcraft acts on your behalf. Please email this document to support@netcraft.com for us to process.
+yes_trademarks - This takedown requires a Trademark Registration Certificate to be uploaded by you before it can proceed. This is because a provider requires evidence that you hold the trademarks being infringed. Please email this document to support@netcraft.com for us to process.
+yes_evidence - This takedown requires evidence of the malicious content to be uploaded by you before it can proceed. Please check the notes for further details.
+yes_business - This takedown requires a Proof of Business document to be uploaded by you before it can proceed. This is because a provider requires evidence that the affected entity is a legitimate business. Please email this document to support@netcraft.com for us to process.
+yes_own_site - We suspect this resource could be owned or controlled by you, so continuing to take it down could result in a false positive. Please investigate whether this is a legitimate resource that you own or control, and add a note to this takedown letting us know the result of the investigation.
+yes_but_excluded - You were required to take an action for this takedown, but you indicated that the action could not be completed.
+Responses
+200 A list of takedown objects matching your search criteria.
+Response Schema: application/json
+Array (<= 100000 items)
+id
+required
+integer
+The ID of the takedown.
+
+group_id
+required
+integer
+Default: ""
+The ID of the group that the takedown belongs to. Can potentially be the same as id, or empty if there is no group.
+
+attack_url
+required
+string <url>
+The location of the attack being taken down. This field contains a canonicalised value. See the reported_url field for the exact location that was reported to takedown.
+
+reported_url
+required
+string <url>
+The location of the attack as reported to takedown. See the attack_url field for the formatted location of the attack being taken down.
+
+ip
+required
+string <ipv4>
+Default: ""
+The IPv4 address of the attack.
+
+domain
+required
+string <domain>
+Default: ""
+The domain of the URL or email address being taken down. This will be blank for attacks with no domain name.
+
+hostname
+required
+string <hostname>
+Default: ""
+The full hostname of the URL or email address being taken down. This will be blank for attacks with no hostname.
+
+attack_type
+required
+string
+Enum: "url" "email" "phone" … 180 more
+The type of attack being taken down.
+
+You can find more information about the different attack types here.
+
+country_code
+required
+string
+Default: ""
+ISO country code of the advertised hosting location.
+
+reporter
+required
+string
+The person/account that submitted the takedown. This will be the email address of the user, or "netcraft" for any reports made by us.
+
+report_source
+required
+string
+Enum: "Takedown Interface" "Phishing Feed" "Referrer Monitoring" … 4 more
+The method through which the takedown was submitted.
+
+Takedown Interface - Reported using the Takedown web interface.
+Phishing Feed - Reported via the Netcraft Phishing Feed.
+Referrer Monitoring - Reported via the Netcraft Referer Monitoring service.
+DMARC Forensic Reports - Reported from DMARC Forensic reports.
+Takedown API - Reported via the Takedown API.
+Email Fraud Feed - Reported via the Netcraft Email Fraud Feed.
+Fraud Detection - Reported via the Netcraft Fraud Detection service.
+date_submitted
+required
+string <date-time>
+The date and time that the takedown was reported, in UTC.
+
+date_authed
+required
+string <date-time>
+Default: ""
+The date and time that the takedown was authorised, in UTC.
+
+last_updated
+required
+string <date-time>
+The date and time of the last action taken on the takedown, in UTC.
+
+stop_monitoring_date
+required
+string <date-time>
+Default: ""
+The date and time that the takedown system stopped monitoring the attack, in UTC. If the attack is still being monitored, an empty string is given.
+
+description
+required
+string
+Default: ""
+The description of the takedown.
+
+region
+required
+string
+Value: "dskbank"
+The name of the area that the takedown resides in.
+
+dskbank - DSK Bank AD
+target_brand
+required
+string
+Value: "DSK Bank"
+The name of the brand being targeted by the attack.
+
+status
+required
+string
+Enum: "Unverified" "Inactive (Monitoring)" "Verified" … 7 more
+The status of the takedown.
+
+Unverified - The report has not yet been verified as fraudulent by Netcraft
+Inactive (Monitoring) - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+Verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+Contacted Hosting - Takedown notices have been sent to the hosting provider
+Contacted Police - The takedown has been escalated to local law enforcement.
+Contacted Upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+Monitoring - The attack is offline, as is being monitored in case it returns.
+Resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+Stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+Invalid - The report is not a valid takedown target.
+authgiven
+required
+string
+"1" if the takedown has been authorised, "0" otherwise.
+
+authorisation_source
+required
+string
+Default: ""
+Enum: "customer" "netcraft"
+The source of authorisation for the takedown. Will be blank if the takedown has not been authorised.
+
+customer - The takedown was authorised by you.
+netcraft - The takedown was authorised by Netcraft.
+escalated
+required
+string
+"1" if the takedown has been escalated, "0" otherwise.
+
+escalation_source
+required
+string
+Default: ""
+Enum: "customer" "netcraft"
+The source of escalation for the takedown. Will be blank if the takedown has not been escalated.
+
+customer - The takedown was escalated by you.
+netcraft - The takedown was escalated by Netcraft.
+fwd_owner
+required
+string
+Default: "[unknown]"
+The owner of the forward DNS infrastructure.
+
+rev_owner
+required
+string
+Default: "[unknown]"
+The owner of the reverse DNS infrastructure.
+
+reverse_dns
+required
+string
+Default: ""
+The output of a reverse DNS lookup on the IP of the attack.
+
+host
+required
+string
+Default: "Unknown"
+The name of the company responsible for the IP address.
+
+registrar
+required
+string
+Default: "Unknown"
+The name of the registrar responsible for the domain name used in the attack.
+
+whois_server
+required
+string
+Default: ""
+The address of the WHOIS server used to query the attack domain.
+
+false_positive
+required
+boolean
+Boolean indicating whether the reported content was incorrectly flagged as malicious.
+
+first_contact
+required
+string <date-time>
+Default: ""
+The date and time that the takedown first entered a contacted state, in UTC.
+
+first_inactive
+required
+string <date-time>
+Default: ""
+The date and time that the takedown first entered the Inactive (Monitoring) state, in UTC.
+
+first_resolved
+required
+string <date-time>
+Default: ""
+The date and time that the attack first went offline, in UTC.
+
+final_resolved
+required
+string <date-time>
+Default: ""
+The date and time that the attack went offline for the final time, in UTC.
+
+first_outage
+required
+string <duration>
+Default: ""
+The duration (HH:MM:SS) between when the takedown was authorised, and the first time that the attack went offline (first_resolved - date_authed).
+
+final_outage
+required
+string <duration>
+Default: ""
+The duration (HH:MM:SS) between when the takedown was authorised, and the final time that the attack went offline (final_resolved - date_authed).
+
+status_change_uptime
+required
+string <duration>
+Default: ""
+The total duration (HH:MM:SS) that the attack was available for after authorisation, as determined by the takedown status changes. i.e. the total amount of time since authorisation that an attack was not in the Resolved or Resolved (Monitoring) state.
+
+language
+required
+string
+Default: ""
+The language used in the attack (if it can be determined).
+
+has_phishing_kit
+required
+string
+"1" if the takedown has an associated phishing kit, "0" otherwise.
+
+domain_attack
+required
+string
+Enum: "all" "yes" "yes_low_confidence" … 1 more
+Whether or not the domain name used in the attack is believed to be fraudulent.
+
+all - All attacks.
+yes - There is a high confidence that the domain name is fraudulent. The domain registrar will be contacted, and the webmaster will not be contacted.
+yes_low_confidence - The domain is likely fraudulent. The domain registrar will be contacted, and the webmaster will still be contacted.
+no - The domain name is not believed to be fraudulent, this is likely a compromised site.
+hostname_attack
+required
+string
+Enum: "all" "yes" "yes_low_confidence" … 1 more
+Whether or not the hostname used in the attack is believed to be fraudulent.
+
+all - All attacks.
+yes - There is a high confidence that the hostname is fraudulent. The Certificate Authority will be contacted.
+yes_low_confidence - The hostname is likely fraudulent.
+no - The hostname is not believed to be fraudulent, this is likely a compromised site.
+evidence_url
+required
+string <url>
+Default: ""
+A URL to the public incident report for this attack.
+
+screenshot_url
+required
+string or Array of strings
+Default: ""
+The URL(s) at which a screenshot of the attack can be found. The type of the returned value and the number of URLs returned can be controlled by the num_screenshots parameter. When returning a single URL as a string (the default behaviour) the returned URL will be the best guess of the screenshot which displays the live attack. When returning multiple URLs, the list will be sorted by the time the screenshot was requested, with the earliest first.
+
+targeted_url
+required
+string <url>
+Default: ""
+The URL which this attack is masquerading as, e.g. the URL of the legitimate login form that a phishing attack is targeting.
+
+phishing_kit_hash
+required
+Array of strings <sha1-hex>
+Default: []
+The SHA1 hashes of all phishing kits available for download which are related to this takedown. The hashes can be provided to the Phishing Kit API using the kit_hash parameter to download the phishing kit.
+
+certificate
+required
+object
+Default: []
+HTTPS certificate details for the hostname. The value returned is similar to the output of PHP's openssl_x509_parse function, with the additional keys spki_sha256 and spki_sha1, and with binary extensions encoded as Base64. The structure of this field is subject to change.
+
+certificate_revoked
+required
+string <date-time>
+Default: "Not revoked"
+If the SSL certificate has been revoked, then the date this was detected (in UTC) is returned, else "Not revoked" is returned.
+
+whois_data	
+string
+The WHOIS data for the takedown. Set this in response_include as an alternative to the provide_whois flag. Note that returning the WHOIS data may greatly increase the size of the response - be careful when enabling this if you are requesting large numbers of results.
+
+customer_tag
+required
+string
+Deprecated
+Default: ""
+Deprecated. Use customer_label instead.
+
+customer_label
+required
+string
+Default: ""
+A custom field which may be provided along with the takedown report.
+
+managed
+required
+boolean
+Deprecated
+Deprecated. Use service_type instead.
+
+service_type	
+string or null
+Enum: "automated" "managed" "default"
+The service type the takedown is being performed under.
+
+automated - The takedown is being conducted under an automated service.
+managed - The takedown is being conducted under a managed service.
+default - The takedown is being conducted under the default service.
+date_escalated
+required
+string <date-time>
+Default: ""
+The date and time that the takedown entered the managed state, in UTC.
+
+date_first_actioned
+required
+string <date-time>
+Default: ""
+The date and time of the first action taken by Netcraft after the takedown was reported, in UTC. This is calculated as the first time that the takedown was moved out of the "Unverified" status.
+
+tags
+required
+Array of strings
+Default: []
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+List of tags applied to the group.
+
+You can find more information about tagging attacks here.
+
+domain_risk_rating
+required
+integer
+Default: 0
+A score from 0 to 10 which represents the risk that the domain is hosting a malicious website. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the risk rating for examp1eb4nk.com. This score is distinct from our "Deceptive Domain Score", and takes a range of factors into account, such as the reputation of the hosting provider, age of the domain name, search engine rankings and more.
+
+site_risk_rating
+required
+integer
+Default: 0
+A score from 0 to 10 which represents the risk that the hostname is hosting a malicious website. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the risk rating for l0gin.examp1eb4nk.com. This score is distinct from our "Deceptive Domain Score", and takes a range of factors into account, such as the reputation of the hosting provider, age of the domain name, search engine rankings and more.
+
+deceptive_domain_score
+required
+number <float>
+Default: 0
+The Deceptive Domain Score of the domain. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the Deceptive Domain Score for examp1eb4nk.com. You can find out more about how this score is calculated here.
+
+hostname_ddss_score
+required
+number <float>
+Default: 0
+The Deceptive Domain Score of the hostname. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the Deceptive Domain Score for l0gin.examp1eb4nk.com. You can find out more about how this score is calculated here.
+
+malware_category
+required
+string
+Default: ""
+The category of malware detected. Only set for malware attack types. May be empty if a category cannot be determined.
+
+malware_family
+required
+string
+Default: ""
+The family of malware detected. Only set for malware attack types. May be empty if a family cannot be determined.
+
+restart_date
+required
+string <date-time>
+Default: ""
+The latest date and time, in UTC, that the takedown was restarted, i.e. went from the "Resolved (Monitoring)" status to a Contacted status. Will be empty if the takedown has never been restarted.
+
+is_redirect	
+string
+Enum: "final" "redirect" "no_redirect"
+Whether or not the attack redirects to another location.
+
+final - The attack is the final destination of another redirect.
+redirect - The attack redirects to another location.
+no_redirect - The attack does not redirect.
+gsb_block_status
+required
+Array of objects[ items ]
+Default: []
+An array of objects containing the browser blocking status on all platforms: Google Safe Browsing on (iOS, Android, Desktop), and the Microsoft SmartScreen browser extension.Will be an empty array if we haven't tested the browser block status for the takedown. This field is named gsb_block_status for historic reasons, it now includes block details from a multitude of platforms
+
+gsb_first_blocked	
+Array of objects[ items ]
+Default: []
+An array of objects containing the first time that the URL was seen to be blocked on a given platform by Netcraft. Will be an empty array if the URL was not seen blocked on any platform.
+
+impersonation_targets	
+Array of objects[ items ]
+Default: []
+List of impersonation target names and roles for the takedown.
+
+waiting_for_customer
+required
+string
+Default: "no"
+Enum: "no" "yes_other" "yes_loa" … 5 more
+Whether the takedown is waiting for any actions to be taken by the customer. Please note when consuming this field that we may add values without warning, but that these will begin yes_.
+
+no - The takedown is not waiting for any actions to be taken. Note that certain actions, such as authorisation, are not covered by this state.
+yes_other - This takedown requires one or more actions to be taken by you before it can proceed. This category is nonspecific so please check the notes to see what actions are required.
+yes_loa - This takedown requires a Proof of Agent document, also known as a Letter of Authorisation, to be uploaded by you before it can proceed. This is because a provider requires evidence that Netcraft acts on your behalf. Please email this document to support@netcraft.com for us to process.
+yes_trademarks - This takedown requires a Trademark Registration Certificate to be uploaded by you before it can proceed. This is because a provider requires evidence that you hold the trademarks being infringed. Please email this document to support@netcraft.com for us to process.
+yes_evidence - This takedown requires evidence of the malicious content to be uploaded by you before it can proceed. Please check the notes for further details.
+yes_business - This takedown requires a Proof of Business document to be uploaded by you before it can proceed. This is because a provider requires evidence that the affected entity is a legitimate business. Please email this document to support@netcraft.com for us to process.
+yes_own_site - We suspect this resource could be owned or controlled by you, so continuing to take it down could result in a false positive. Please investigate whether this is a legitimate resource that you own or control, and add a note to this takedown letting us know the result of the investigation.
+yes_but_excluded - You were required to take an action for this takedown, but you indicated that the action could not be completed.
+incident_report
+required
+string <url>
+Default: ""
+Incident V2 report url for the takedown. Will be empty if no report has been generated.
+
+false_positive_info
+required
+object
+Default: null
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+480 The arguments that you have passed would have returned more than the maximum limit of 100,000 results.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View a specific takedown
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'id=30480489' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns in a group
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'group_id=30480489' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns of type "Phishing URL"
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'attack_types=phishing_url' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns matching a specific label
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'customer_label=My Custom Label' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns reported after the given ID
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'id_after=30480489' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all takedowns updated within the last hour
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'updated_since=1 hour ago' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all active takedowns submitted within the last 12 months
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'date_from=12 months ago' \
+    --form 'statuses=verified,contacted_hosting,contacted_police,contacted_upstream' \
+    --form 'authgiven=yes' \
+    https://takedown.netcraft.com/api/v1/attacks/
+
+# View all active Phishing URL takedowns under the default service type submitted by you in the last 2 weeks
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'date_from=2 weeks ago' \
+    --form 'statuses=verified,contacted_hosting,contacted_police,contacted_upstream' \
+    --form 'authgiven=yes' \
+    --form 'attack_types=phishing_url' \
+    --form 'service_type=default' \
+    --form 'reporter=customer' \
+    https://takedown.netcraft.com/api/v1/attacks/
+Response samples
+200400403480500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"id": "30480489",
+"group_id": "30480489",
+"attack_url": "https://l0gin.examp1eb4nk.com/app/",
+"reported_url": "https://l0gin.examp1eb4nk.com/app/",
+"ip": "192.0.2.1",
+"domain": "examp1eb4nk.com",
+"hostname": "l0gin.examp1eb4nk.com",
+"attack_type": "phishing_url",
+"country_code": "us",
+"reporter": "user@examplebank.com",
+"report_source": "Takedown Interface",
+"date_submitted": "2025-07-18 14:46:53 UTC",
+"date_authed": "2025-07-18 14:56:53 UTC",
+"last_updated": "2025-07-18 15:41:53 UTC",
+"stop_monitoring_date": "",
+"description": "",
+"region": "example_region",
+"target_brand": "Example Brand",
+"status": "Monitoring",
+"authgiven": "\"1\"",
+"authorisation_source": "netcraft",
+"escalated": "1",
+"escalation_source": "",
+"fwd_owner": "exampleregistrar.com",
+"rev_owner": "examplehost.com",
+"reverse_dns": "192-0-2-1.examplehost.com",
+"host": "Example Host",
+"registrar": "Example Registrar",
+"whois_server": "whois.exampleregistrar.com",
+"false_positive": false,
+"first_contact": "2025-07-18 14:51:53 UTC",
+"first_inactive": "",
+"first_resolved": "2025-07-18 15:31:53 UTC",
+"final_resolved": "2025-07-18 15:41:53 UTC",
+"first_outage": "00:35:00",
+"final_outage": "00:45:00",
+"status_change_uptime": "00:40:00",
+"language": "english",
+"has_phishing_kit": "1",
+"domain_attack": "yes",
+"hostname_attack": "yes_low_confidence",
+"evidence_url": "https://incident.netcraft.com/1b24dexample/",
+"screenshot_url": "https://screenshot.netcraft.com/images/archive/<date>/s3e93b5d93ed97ebd2c3d0876dae9b57.png",
+"targeted_url": "https://examplebank.com/",
+"phishing_kit_hash": [
+"2818a25d2f839c3e0608f00af34bb98ca2571c74"
+],
+"certificate": [ ],
+"certificate_revoked": "2025-07-18 15:26:53 UTC",
+"whois_data": "string",
+"customer_tag": "",
+"customer_label": "Internal Issue #12345",
+"managed": false,
+"service_type": "automated",
+"date_escalated": "",
+"date_first_actioned": "2025-07-18 14:53:53 UTC",
+"tags": [ ],
+"domain_risk_rating": 10,
+"site_risk_rating": 9,
+"deceptive_domain_score": 9.85,
+"hostname_ddss_score": 8.25,
+"malware_category": "",
+"malware_family": "",
+"restart_date": "",
+"is_redirect": "final",
+"gsb_block_status": [
+{},
+{},
+{},
+{}
+],
+"gsb_first_blocked": [
+{},
+{},
+{},
+{}
+],
+"impersonation_targets": [
+{},
+{}
+],
+"waiting_for_customer": "yes_other",
+"incident_report": "",
+"false_positive_info": {
+"cause": "The website was misclassified due to bad logic in our classification system.",
+"source": "A false positive report was received from a customer.",
+"timestamp": "2025-07-18 15:21:53 UTC",
+"impact": "The takedown was never completed, so the site was not affected.",
+"remediation": "We have sent a follow up email to the parties that we originally contacted requesting that our original report is disregarded."
+}
+}
+]
+Update a Takedown's Fields
+
+post
+/update-attack
+Minimum Access Level Required	Authoriser
+This endpoint can be used to update one or more fields related to a takedown.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+takedown_id
+required
+integer
+The ID of the takedown to update.
+
+set_customer_label	
+string
+A free-text field which can be used to keep track of particular attacks.
+
+set_description	
+string
+The reason for your report, such as a description of the attack.
+
+set_region	
+string
+Value: "dskbank"
+The name of the region to move the takedown under.
+
+dskbank - DSK Bank AD
+set_brand	
+string
+Value: "dskbank"
+The brand to move the takedown under.
+
+dskbank - DSK Bank
+set_suspected_fraudulent_domain	
+boolean
+Should be set to true if you believe that the domain name has been registered as part of the fraud. This will ensure that the registrar is contacted to seek suspension of the domain name.
+
+set_suspected_fraudulent_hostname	
+boolean
+Should be set to true if you believe that the hostname has been created as part of the fraud. This will ensure that the certificate issuer is contacted to seek revocation of any certificates for the hostname.
+
+add_tags	
+array
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+One or more tags to add to the takedown group. Multiple values may be specified as a comma-separated list.
+
+You can find more information about tagging attacks here.
+
+remove_tags	
+array
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+One or more tags to remove from the takedown group. Multiple values may be specified as a comma-separated list. Removing a tag from a group which already doesn't have that tag is permitted. However, including the same tag in both add_tags and remove_tags will return an error.
+
+You can find more information about tagging attacks here.
+
+Responses
+200 The updated values of the attack. This will include all editable values, including those which were not changed.
+Response Schema: application/json
+takedown_id
+required
+integer
+The ID of the takedown that was updated.
+
+customer_label
+required
+string
+Default: ""
+A custom field which may be provided along with the takedown report.
+
+description
+required
+string
+The current value of the attack's description field.
+
+region
+required
+string
+Value: "dskbank"
+The name of the area that the takedown resides in.
+
+dskbank - DSK Bank AD
+target_brand
+required
+string
+Value: "DSK Bank"
+The name of the brand being targeted by the attack.
+
+suspected_fraudulent_domain
+required
+boolean
+Whether the attack is currently suspected to use a fraudulent domain. This is only one of several factors used to determine whether Netcraft believes this to be a domain attack.
+
+suspected_fraudulent_hostname
+required
+boolean
+Whether the attack is currently suspected to use a fraudulent hostname. This is only one of several factors used to determine whether Netcraft believes this to be a hostname attack.
+
+tags
+required
+Array of strings
+Default: []
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+List of tags applied to the group.
+
+You can find more information about tagging attacks here.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'takedown_id=30480489' \
+    --form 'set_description=New description of takedown' \
+    --form 'set_suspected_fraudulent_domain=false' \
+    --form 'add_tags=abc,def' \
+    --form 'remove_tags=ghi' \
+    https://takedown.netcraft.com/api/v1/update-attack/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"takedown_id": "30480489",
+"customer_label": "Internal Issue #12345",
+"description": "New description of takedown",
+"region": "example_region",
+"target_brand": "Example Brand",
+"suspected_fraudulent_domain": "false",
+"suspected_fraudulent_hostname": "false",
+"tags": [ ]
+}
+Authorisation
+Authorise a Takedown Group
+
+post
+/authorise
+Minimum Access Level Required	Authoriser
+This endpoint can be used to authorise a takedown's group.
+
+Note that authorising a takedown group may cost credits.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+takedown_id
+required
+integer
+The ID of a takedown or takedown group to authorise.
+
+Responses
+200 The takedown has been authorised successfully.
+Response Schema: application/json
+status
+required
+string
+Value: "TD_OK"
+authorised
+required
+Array of strings
+IDs of the Takedowns authorised by this request
+
+credits_spent
+required
+object
+The credits used by this request
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/authorise/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"status": "TD_OK",
+"authorised": [
+"111111",
+"222222",
+"333333"
+],
+"credits_spent": {
+"automated": 1,
+"managed": 0
+}
+}
+Escalation
+Escalate a Takedown
+
+post
+/escalate
+Minimum Access Level Required	Escalator
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/escalate.php
+This endpoint can be used to escalate an automated takedown to a managed takedown.
+
+Note that escalating a takedown may cost one or more managed credits.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+takedown_id
+required
+integer
+The ID of the automated takedown to escalate.
+
+Responses
+200 The takedown has been escalated successfully.
+Response Schema: application/json
+status
+required
+string
+Value: "TD_OK"
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/escalate/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+{
+"status": "TD_OK"
+}
+Takedown Notes
+View Notes on a Takedown
+
+get
+/notes
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/note.php
+This endpoint can be used to retrieve details of notes that have been added to your takedowns.
+
+Only notes which have been added by you, or notes added by Netcraft which have been flagged as important will be returned. Notes relating to the day-to-day operation of the service, such as the takedown notices that have been sent, will not be included in the API response.
+
+Authorizations:
+Bearer Auth
+query Parameters
+takedown_id	
+integer
+Filter to notes that have been added to the takedown with the given ID.
+
+group_id	
+integer
+Filter to notes that have been added to takedowns within the given group.
+
+date_from	
+string <date-time>
+Filter to notes that were created on or after the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_to	
+string <date-time>
+Filter to notes that were created on or before the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+author	
+any
+Filter to notes that were created by the user with the given username. Notes that were created by Netcraft can be found by filtering to Netcraft.
+
+Responses
+200 A list of notes matching the given parameters.
+Response Schema: application/json
+Array 
+note_id
+required
+integer
+The unique identifier for the note.
+
+takedown_id
+required
+integer
+The ID of the takedown that the note belongs to.
+
+group_id
+required
+integer
+Default: 0
+The ID of the takedown group that this note belongs to.
+
+This will only be set if the note has been attached to all takedowns in the group, otherwise this field will have a value of 0.
+
+time
+required
+string <date-time>
+The date and time that the note was created, formatted as YYYY-MM-DD HH:MM:SS in UTC.
+
+author
+required
+string
+The username of the account that created the note. Notes added by Netcraft will show as Netcraft.
+
+note
+required
+string
+The contents of the note.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View notes for a specific takedown
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/notes/
+
+# View notes added within the last week
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'date_from=1 week ago' \
+    https://takedown.netcraft.com/api/v1/notes/
+
+# View notes added to the given group within the last 8 hours by a specific user
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'group_id=30480489' \
+    --data-urlencode 'date_from=8 hours ago' \
+    --data-urlencode 'author=user@examplebank.com' \
+    https://takedown.netcraft.com/api/v1/notes/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"note_id": 12345,
+"takedown_id": "30480489",
+"group_id": "30480489",
+"time": "2025-07-18 15:26:53 UTC",
+"author": "Netcraft",
+"note": "This is an important message!"
+}
+]
+Add a Note to a Takedown
+
+post
+/notes
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/note.php
+This endpoint can be used to add a new note to an existing takedown.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+takedown_id
+required
+integer
+The ID of the takedown to add the note to.
+
+text
+required
+string
+The contents of the new note.
+
+notify	
+boolean
+Default: true
+When set to true, the note will also be raised to our operations team for further investigation. This should be set if you require a Netcraft staff member to read and respond to your note.
+
+Responses
+200 A new note has been created successfully.
+Response Schema: application/json
+note_id
+required
+integer
+The unique ID of the note that has been added.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'takedown_id=30480489' \
+    --form 'text=An important message' \
+    https://takedown.netcraft.com/api/v1/notes/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+{
+"note_id": 12345
+}
+Related Evidence Files
+View Supporting Evidence
+
+get
+/evidence
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/evidence.php
+This endpoint can be used to download copies of the fraudulent emails for mail-related attacks, malicious requests for web-app attacks, as well as any additional files that have been uploaded to support a takedown. These additional files are listed on the web interface under the "Files" section of a takedown.
+
+This endpoint will return the evidence file as an application/octet-stream file transfer. If there is more than one evidence file to return, the files will be provided as a zip archive. A previously uploaded file can be downloaded by specifying the file_id parameter you received when uploading the file.
+
+Authorizations:
+Bearer Auth
+query Parameters
+takedown_id
+required
+integer
+The ID of the takedown to retrieve evidence for.
+
+file_id	
+string
+UUID of a previously uploaded file to download from the takedown. If not provided, all files will be returned as a zip archive.
+
+Responses
+200 Evidence files associated with the takedown.
+Response Schema: application/octet-stream
+string <binary>
+A file transfer containing the evidence file for the takedown. If there is more than one evidence file, the files are provided as a zip archive.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/evidence/
+Response samples
+400403500503
+Content type
+application/json
+
+Copy
+{
+"error_code": "TD_ERROR",
+"error_message": "Missing required parameter 'example'."
+}
+Upload Supporting Evidence
+
+post
+/evidence
+Minimum Access Level Required	Authoriser
+This endpoint can be used to upload supporting evidence such as screenshots or emails to a takedown. The evidence will be associated with the takedown and will be visible on the web interface under the 'Files' section of a takedown.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+takedown_id
+required
+integer
+The ID of the takedown to upload evidence for
+
+file
+required
+string <binary>
+The file to upload.
+
+Each API request must contain a single file, of size 25MB or less.
+
+Each takedown group may store up to a total of 100MB or 100 files, whichever comes first.
+
+label	
+string
+A brief description for the evidence file
+
+phishkit_source_url	
+string
+If uploading a phishing kit archive, the URL of the site from which the phishing kit was downloaded.
+
+One of phishkit_source_url or phishkit_attack_url must be provided for phishing kit uploads.
+
+phishkit_attack_url	
+string
+If uploading a phishing kit archive, the URL of the phishing attack which uses the provided phishkit
+
+One of phishkit_source_url or phishkit_attack_url must be provided for phishing kit uploads.
+
+phishkit_password	
+string
+If uploading an encrypted phishing kit archive, the password to access the archive
+
+Responses
+201 Evidence file uploaded successfully.
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+409 The uploaded file conflicts with an existing file.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# Attach a screenshot of the phishing site to the takedown
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'takedown_id=30480489' \
+    --form 'label=Screenshot of the phishing site' \
+    --form 'file=@/path/to/screenshot.png' \
+    https://takedown.netcraft.com/api/v1/evidence/
+Response samples
+201400403409500503
+Content type
+application/json
+
+Copy
+{
+"file_id": "81556fda-5d29-4303-8d48-59f30e999d07"
+}
+View Related Phishing Kits
+
+get
+/phishkits
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/phishkit-api.php
+This endpoint can be used to download any related phishing kits that may have been discovered for the given takedown. Kits can also be downloaded directly via their kit_hash, which can be obtained from the /attacks endpoint.
+
+This endpoint will return the phishing kit as a zip archive via an application/octet-stream file transfer. If more than one phishing kit has been identified, they will all be returned as part of a single archive.
+
+Authorizations:
+Bearer Auth
+query Parameters
+takedown_id	
+integer
+The ID of the takedown to retrieve phishing kits for.
+
+Must not be provided when the kit_hash parameter is set.
+
+kit_hash	
+string <sha1-hex>
+The identifying hash for a specific phishing kit. The hash of a kit is the SHA1 hash of the kit archive. The hashes returned from the /attacks endpoint in the phishing_kit_hash field can be provided here.
+
+Must not be provided when the takedown_id parameter is set.
+
+Responses
+200 Phishing kit archives associated with the takedown.
+Response Schema: application/octet-stream
+string <binary>
+A file transfer containing the related phishing kits as a zip archive. If there is more than one phishing kit, a single archive containing multiple kits will be served.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View kits for a given takedown
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/phishkits/
+
+# View a specific kit
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'kit_hash=2818a25d2f839c3e0608f00af34bb98ca2571c74' \
+    https://takedown.netcraft.com/api/v1/phishkits/
+Response samples
+400403500503
+Content type
+application/json
+
+Copy
+{
+"error_code": "TD_ERROR",
+"error_message": "Missing required parameter 'example'."
+}
+View Screenshots
+
+get
+/screenshots
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/screenshot.php
+This endpoint can be used to return screenshots of the attack content for a given takedown.
+
+Authorizations:
+Bearer Auth
+query Parameters
+takedown_id
+required
+integer
+The ID of the takedown to fetch screenshots for.
+
+date_from	
+string <date-time>
+Filter to screenshots that were requested after the date and time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_to	
+string <date-time>
+Filter to screenshots that were requested before the date and time provided.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+status	
+Array of strings
+Items Enum: "unverified" "inactive_monitoring" "verified" … 7 more
+Filter to screenshots that were requested whilst the takedown was in the provided status. Multiple values may be provided as a comma-separated list.
+
+unverified - The report has not yet been verified as fraudulent by Netcraft
+inactive_monitoring - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+contacted_hosting - Takedown notices have been sent to the hosting provider
+contacted_police - The takedown has been escalated to local law enforcement.
+contacted_upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+resolved_monitoring - The attack is offline, as is being monitored in case it returns.
+resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+invalid - The report is not a valid takedown target.
+include_failed	
+boolean
+Default: false
+When set to true, capture attempts that failed to complete will be included in the results.
+
+limit	
+integer
+Default: 10
+Limit the maximum number of results returned.
+
+capture_status	
+Array of strings
+Default: "successful,pending"
+Items Enum: "successful" "pending" "failed"
+Filter to screenshots with the specified capture status. Multiple values may be provided as a comma-separated list.
+
+successful - The screenshot was successfully captured.
+pending - A screenshot capture has been requested, and is currently being processed.
+failed - The screenshot capture request failed.
+Responses
+200 A list of screenshots taken for the given takedown.
+Response Schema: application/json
+Array 
+screenshot_id
+required
+integer
+A unique identifier for the screenshot.
+
+username
+required
+string
+The username of the account that requested the screenshot. Screenshots requested by Netcraft are displayed as netcraft.
+
+requested
+required
+string <date-time>
+The date and time that the screenshot was requested, formatted as YYYY-MM-DD HH:MM:SS in UTC.
+
+country_code
+required
+string
+The ISO 3166 code of the country in which the screenshot was taken.
+
+expected
+required
+string <date-time>
+The date and time that the screenshot was captured, formatted as YYYY-MM-DD HH:MM:SS in UTC.
+
+For captures in the pending status, this field contains the estimated date and time that the screenshot will become available.
+
+status
+required
+string
+Enum: "Unverified" "Inactive (Monitoring)" "Verified" … 7 more
+The status of the takedown when the screenshot was requested.
+
+Unverified - The report has not yet been verified as fraudulent by Netcraft
+Inactive (Monitoring) - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+Verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+Contacted Hosting - Takedown notices have been sent to the hosting provider
+Contacted Police - The takedown has been escalated to local law enforcement.
+Contacted Upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+Monitoring - The attack is offline, as is being monitored in case it returns.
+Resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+Stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+Invalid - The report is not a valid takedown target.
+screenshot_url
+required
+string <url>
+The URL at which the screenshot is available to download.
+
+final_url
+required
+string or null <url>
+The URL of the page captured in the screenshot, after following any redirects.
+
+capture_status
+required
+string
+Enum: "successful" "pending" "failed"
+The current status of the screenshot capture request.
+
+successful - The screenshot was successfully captured.
+pending - A screenshot capture has been requested, and is currently being processed.
+failed - The screenshot capture request failed.
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all screenshots captured for a given takedown
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/screenshots/
+
+# View all screenshots captured for a given takedown whilst it was in an active state
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    --data-urlencode 'status=verified,contacted_hosting,contacted_police,contacted_upstream' \
+    https://takedown.netcraft.com/api/v1/screenshots/
+
+# View all screenshots captured for a given takedown within the last 8 hours
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    --data-urlencode 'date_from=8 hours ago' \
+    https://takedown.netcraft.com/api/v1/screenshots/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"screenshot_id": "188846113",
+"username": "user@examplebank.com",
+"requested": "2025-07-18 15:16:53 UTC",
+"country_code": "US",
+"expected": "2025-07-18 15:11:53 UTC",
+"status": "Contacted Hosting",
+"screenshot_url": "https://screenshot.netcraft.com/images/archive/%3Cdate%3E/s3e93b5d93ed97ebd2c3d0876dae9b57.png",
+"final_url": "https://l0gin.examp1eb4nk.com/app/",
+"capture_status": "successful"
+}
+]
+Related Report Submissions
+View Related Report Submissions
+
+get
+/report-submissions
+Minimum Access Level Required	Viewer
+This endpoint can be used to retrieve details of related report submissions.
+
+Authorizations:
+Bearer Auth
+query Parameters
+takedown_id	
+integer
+The ID of the takedown to retrieve report submissions for.
+
+date_format	
+string
+Default: "default"
+Enum: "default" "iso8601" "rfc2822" … 1 more
+The format to return date/time values in.
+
+default - YYYY-MM-DD HH:MM:SS Timezone
+iso8601 - ISO 8601 format.
+rfc2822 - RFC 2822 format.
+unix - Unix timestamp, i.e. the number of seconds since the Unix epoch (1970-10-01 00:00:00 UTC).
+Responses
+200 A list of related report submissions.
+Response Schema: application/json
+Array 
+date
+required
+string <date-time>
+The date and time that the event occurred.
+
+submitter_email
+required
+string
+The email of the submitter.
+
+source
+required
+string
+The source of the submission.
+
+uuid
+required
+string
+The unique identifier of the submission.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all related report submissions
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/report-submissions/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"date": "2025-07-18 13:46:53 UTC",
+"submitter_email": "user@examplebank.com",
+"source": "Example",
+"uuid": "NupIVvkkVcZ1o3gk1wK1GPrj8DivoNqZ"
+}
+]
+Takedown Relationships
+View takedown relationships.
+
+get
+/attack-relationships
+Minimum Access Level Required	Viewer
+This endpoint can be used to retrieve the relationships that exist between your takedowns.
+
+Authorizations:
+Bearer Auth
+query Parameters
+takedown_id
+required
+integer
+Filter to relationships that include a takedown with the specified ID.
+
+relationship_types[]	
+Array of strings
+Items Enum: "mailserver" "redirect" "duplicate" … 21 more
+Filter to relationships which have the given relationship type. You can provide this parameter more than once to filter on multiple types.
+
+Responses
+200 A list of the relationships between your takedowns.
+Response Schema: application/json
+Array 
+from_takedown_id
+required
+integer
+The ID of the takedown which the relationship stems from.
+
+to_takedown_id
+required
+integer
+The ID of the takedown that the 'from' takedown relates to.
+
+relationship_type
+required
+string
+Enum: "mailserver" "redirect" "duplicate" … 21 more
+The relationship type between the two takedowns.
+
+mailserver - The IP of the mailserver takedown in the relationship is being used to distribute the attack in the URL takedown.
+redirect - The URL takedown on the from side of the relationship redirects to the URL takedown on the to side.
+duplicate - The two takedowns in the relationship are for the same attack, but exist in different areas.
+phishkit_email - The email address in the relationship is receiving the credentials stolen by the related attack.
+phishkit - The two takedowns in the relationship are both part of the same phishkit.
+javascript_resource - The URL takedown in the relationship is using the javascript resource takedown for malicious purposes.
+skimmer_credential_dropsite - The URL of the dropsite takdown in the relationship is receiving skimmed credentials from the attack in the URL takedown.
+same_domain - The two takedowns in the relationship are hosted on the same domain.
+webshell_mailer - The attack in the takedown is being distributed via the web shell takedown in the relationship
+malware_c2_attachment_legacy - The malware contained within the URL takedown is being distributed by the IP of the mailserver takedown in the relationship.
+malware_c2_attachment - The C2 malware contained within the URL takedown is being distributed by the IP of the mailserver takedown in the relationship.
+malware_c2_distribution - The URL takedown in the relationship is being used to distribute malicious binaries, which in turn is being propagated by the IP of the mailserver takedown.
+malware_c2_payment - The ransomware payment collection attack contained within the URL takedown is being distributred by the IP of the mailserver takedown in the relationship.
+malware_c2_lure - The Malware Lure URL takedown in the relationship is providing a download to the malicious binary.
+fca_report - The two takedowns in the relationship share FCA reports with each other.
+scraped_phone_number - The contact number contained within the phone number takedown was scraped from the support scam attack in the URL takedown of the relationship.
+phishkit_phone_number - The contact number contained within the phone number takedown is known to be distributed by the support scam in the URL takedown of the relationship based on kit analysis.
+web_shell_phish - The attack in the URL takedown is being distributed via the web shell takedown in the relationship.
+payment_facilitator - The payment gateway takedown is being used to facilitate payments for the fake shop takedown in the relationship.
+phishkit_telegram_output - The telegram takedown on the from side of the relationship is being used to receive stolen credentials from the takedown on the to side.
+mailserver_for_phone_number - The contact number contained within the phone number takedown is being distributed by the IP of the mailserver takedown in the relationship.
+scam_email_for_phone_number - The email address takedown is being used to distribute the contact number contained within the phone number takedown of the relationship.
+facebook_ad_profile - The Facebook account is being used to create Meta adverts for the other attack in the relationship.
+relates - The two takedowns are related via some non-specific criteria.
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all the relationships that include a given takedown
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    https://takedown.netcraft.com/api/v1/attack-relationships/
+
+# View all the redirect relationships for a given takedown
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'takedown_id=30480489' \
+    --data-urlencode 'relationship_types[]=redirect' \
+    https://takedown.netcraft.com/api/v1/attack-relationships/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"from_takedown_id": "30480489",
+"to_takedown_id": "30480489",
+"relationship_type": "duplicate"
+}
+]
+False Positives
+Flag a takedown as a potential false positive
+
+post
+/false-positive
+Minimum Access Level Required	Authoriser
+This endpoint can be used to flag an existing takedown as a potential false positive.
+
+If the takedown has already been authorised, a member of staff will be prompted to investigate further and send retraction notices as necessary.
+
+If the takedown has not yet been authorised, all takedowns in the group will be moved directly into the "Invalid" status.
+
+Authorizations:
+Bearer Auth
+Request Body schema: application/x-www-form-urlencoded
+takedown_id
+required
+integer
+The ID of the takedown to flag as a false positive.
+
+reason
+required
+string <= 1000 characters
+A short summary of why the takedown is believed to be a false positive
+
+Responses
+200 The takedown has been flagged as a false positive.
+Response Schema: application/json
+status
+required
+string
+Value: "TD_OK"
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+curl -X POST \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --form 'takedown_id=30480489' \
+    --form 'reason=This domain name is owned and operated by Example Bank' \
+    https://takedown.netcraft.com/api/v1/false-positive/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+{
+"status": "TD_OK"
+}
+Attack Types
+View Supported Attack Types
+
+get
+/attack-types
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/attack-types.php
+This endpoint can be used to return information on the attack types that are available under a given region.
+
+Authorizations:
+Bearer Auth
+query Parameters
+region
+required
+string
+Value: "dskbank"
+The name of the region to generate the list of available attack types for.
+
+dskbank - DSK Bank AD
+name	
+string
+Enum: "url" "email" "phone" … 180 more
+Filter to the attack type with the given name.
+
+You can find more information about the different attack types here.
+
+automated	
+boolean
+Filter to attack types where automated takedowns are available.
+
+auto_escalation	
+boolean
+Filter to attack types which you have chosen to escalate to managed takedowns after the configured escalation period.
+
+auto_authorise	
+boolean
+Filter to attack types which you have chosen to automatically authorise takedowns against.
+
+Responses
+200 A list of supported attack types.
+Response Schema: application/json
+Array 
+name
+required
+string
+Enum: "phishing_url" "malware_url" "dropsite" … 120 more
+The unique string identifier for the attack type.
+
+You can find more information about the different attack types here.
+
+display_name
+required
+string
+The human-readable name of the attack type.
+
+base_type
+required
+string
+Enum: "url" "email" "server" … 8 more
+The unique string identifier for the top-level parent type of this attack type.
+
+url - A publicly accessible URL pointing to or otherwise supporting criminal activity.
+email - The address of an email account that is under the control of a threat actor.
+server - The IP address of a server being used to send fraudulent mails or malicious requests.
+phone - A phone number that is under the control of a threat actor.
+domain - A domain name that has been registered by a threat actor.
+bank_account - The sort code and account number of a bank account used in fraudulent transactions.
+malware_c2_ip - An IP address and port being used to conduct a malware attack.
+malicious_infrastructure - A range of IP addresses that are under the control of a threat actor.
+payment_facilitator - A payment platform used to collect the proceeds of criminal activity.
+phishkit_telegram - A telegram identifier used to receive stolen credentials collected from phishing sites.
+blocked_asset -
+description
+required
+string
+A short description of the attack type.
+
+automated
+required
+boolean
+A boolean indicating whether or not automated takedowns are available for this attack type.
+
+auto_escalation
+required
+boolean
+A boolean indicating whether or not you have chosen to automatically escalate takedowns under this type to managed takedowns after the configured escalation period.
+
+auto_authorise
+required
+boolean
+A boolean indicating whether or not you have chosen to automatically authorise takedowns under this type.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all available attack types for the given region
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    https://takedown.netcraft.com/api/v1/attack-types/
+
+# View the information for a specific attack type
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    --data-urlencode 'name=phishing_url' \
+    https://takedown.netcraft.com/api/v1/attack-types/
+
+# View all available attack types where takedowns will be automatically authorised
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    --data-urlencode 'auto_authorise=true' \
+    https://takedown.netcraft.com/api/v1/attack-types/
+
+# View all managed attack types where takedowns will be automatically authorised
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    --data-urlencode 'auto_authorise=true' \
+    --data-urlencode 'automated=false' \
+    https://takedown.netcraft.com/api/v1/attack-types/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"name": "phishing_url",
+"display_name": "Phishing URL",
+"base_type": "url",
+"description": "The URL for a webpage which impersonates your company in an attempt to trick users into submitting their login details. Usually the URL is linked to in an email sent to your users.",
+"automated": true,
+"auto_escalation": true,
+"auto_authorise": true
+}
+]
+Contracts and Credits
+View Active Contracts and Credits
+
+get
+/contracts
+Minimum Access Level Required	Escalator
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/contracts.php
+This endpoint can be used to return information on all of your active contracts, including the number of credits that you have purchased, as well as the number of credits remaining.
+
+Results can be filtered to contracts that cover specific regions or attack types, as well as by the type of credits provided.
+
+Authorizations:
+Bearer Auth
+query Parameters
+region	
+string
+Value: "dskbank"
+Filter to contracts which cover the given region. If no region is provided, results will be returned for all visible regions.
+
+dskbank - DSK Bank AD
+contract_type[]	
+Array of strings
+Items Enum: "automated" "managed" "feed"
+Filter to contracts based on the type of credit that they provide. You can provide this parameter more than once to filter on multiple types.
+
+automated - A contract that provides automated takedown credits.
+managed - A contract that provides managed takedown credits.
+feed - A contract that provides access to the list of attacks, but with no takedowns.
+attack_type[]	
+Array of strings
+Items Enum: "url" "email" "phone" … 180 more
+Filter to contracts which cover the given attack type. You can provide this parameter more than once to filter on multiple types.
+
+You can find more information about the different attack types here.
+
+Responses
+200 A list of all of your active contracts.
+Response Schema: application/json
+all
+required
+Array of objects (Contract) [ items ]
+A list of all of the unique active contracts available across the selected regions.
+
+regions
+required
+object
+A map of region names to the active contracts available to that region.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all contracts and remaining credits for the given region
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    https://takedown.netcraft.com/api/v1/contracts/
+
+# View all contracts that provide managed credits
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'contract_type[]=managed' \
+    https://takedown.netcraft.com/api/v1/contracts/
+
+# View all contracts that provide managed credits for Phishing URL takedowns in the given region
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    --data-urlencode 'contract_type[]=managed' \
+    --data-urlencode 'attack_type[]=phishing_url' \
+    https://takedown.netcraft.com/api/v1/contracts/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"all": [
+{
+"type": "automated",
+"start_date": "2025-01-01",
+"end_date": "2025-08-31",
+"credits": {},
+"attack_types": []
+},
+{
+"type": "managed",
+"start_date": "2025-01-01",
+"end_date": "2025-08-31",
+"credits": {},
+"attack_types": []
+},
+{
+"type": "managed",
+"start_date": "2025-04-01",
+"end_date": "2025-08-31",
+"credits": {},
+"attack_types": []
+}
+],
+"regions": {
+"example_region": [
+{},
+{}
+],
+"example_region_2": [
+{}
+]
+}
+}
+Impersonation Targets
+View impersonation targets.
+
+get
+/impersonation-targets
+Minimum Access Level Required	Viewer
+This endpoint can be used to retrieve the impersonation targets for your accessible regions.
+
+Authorizations:
+Bearer Auth
+query Parameters
+region	
+string
+Value: "dskbank"
+Filter to impersonation targets that the given region has access to. If this parameter is not specified or the given value is not a valid region name, then impersonation targets from all accessible regions will be shown.
+
+dskbank - DSK Bank AD
+Responses
+200 A list of impersonation targets.
+Response Schema: application/json
+Array 
+id
+required
+integer
+The impersonation target's ID.
+
+name
+required
+string
+The impersonation target's name.
+
+role
+required
+string
+The impersonation target's role.
+
+regions
+required
+Array of strings
+Default: []
+List of regions that the impersonation target is accessible from.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all the impersonation targets for a given region.
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    https://takedown.netcraft.com/api/v1/impersonation-targets/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"id": "1",
+"name": "John Doe",
+"role": "Group CEO",
+"regions": [
+"example_region"
+]
+}
+]
+Regions
+View Regions and Assocciated Brands
+
+get
+/regions
+Minimum Access Level Required	Viewer
+This endpoint can be used to return information on the regions you have access to and their associated brands
+
+Authorizations:
+Bearer Auth
+query Parameters
+region	
+string
+Value: "dskbank"
+The name of the region used to generate the list of sub-regions and brands for
+
+dskbank - DSK Bank AD
+Responses
+200 A list of regions and brands
+Response Schema: application/json
+Array 
+name
+required
+string
+The unique string identifier for the region.
+
+display_name
+required
+string
+The human-readable name of the region.
+
+real_site
+required
+string
+The URL of the genuine website associated with the region.
+
+any_brand
+required
+boolean
+A boolean value indicating whether the specified region can perform takedowns for any brand.
+
+brands
+required
+Array of objects[ items ]
+A list of brands associated with this region
+
+children
+required
+Array of objects[ items ]
+A list of sub-regions and all their details
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all available regions and brands you have access to
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    https://takedown.netcraft.com/api/v1/regions/
+
+# View all available sub-regions and brands of a given region
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    https://takedown.netcraft.com/api/v1/regions/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"name": "example_region",
+"display_name": "Example Region",
+"real_site": "https://examplebank.com",
+"any_brand": false,
+"brands": [
+{}
+],
+"children": [
+{}
+]
+}
+]
+User Accounts
+View User Accounts
+
+get
+/users
+Minimum Access Level Required	Escalator
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/users.php
+This endpoint can be used to return a list of user accounts that have access to your takedown regions.
+
+Authorizations:
+Bearer Auth
+query Parameters
+region	
+string
+Value: "dskbank"
+Filter to users with access to the given region. If no value is given for this parameter, then all users with access to any of your regions will be returned.
+
+dskbank - DSK Bank AD
+sub_regions	
+boolean
+Default: false
+When set to true, the API will return users with access to sub-regions of the specified region
+
+This parameter has no effect when the region parameter is not supplied.
+
+date_format	
+string
+Default: "default"
+Enum: "default" "iso8601" "rfc2822" … 1 more
+Used to modify the format that the API should return date-time values in.
+
+default - YYYY-MM-DD HH:MM:SS Timezone
+iso8601 - ISO 8601 format.
+rfc2822 - RFC 2822 format.
+unix - Unix timestamp, i.e. the number of seconds since the Unix epoch (1970-10-01 00:00:00 UTC).
+Responses
+200 A list of user accounts with access to the specified regions.
+Response Schema: application/json
+dskbank	
+Array of objects (UserAccount) [ items ]
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View users with access to the given region, and all sub-regions
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    --data-urlencode 'sub_regions=1' \
+    https://takedown.netcraft.com/api/v1/users/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"dskbank": [
+{
+"username": "user@examplebank.com",
+"access_level": "Escalator",
+"last_visit": "2025-07-18 15:41:53 UTC",
+"last_auth": "2025-07-18 15:41:53 UTC",
+"mfa_enabled": true,
+"inherited_from": "some_other_region"
+}
+]
+}
+Takedown Totals
+View Takedown Totals
+
+get
+/counts
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/takedown-counts.php
+This endpoint can be used to return the total number of takedowns that match the given filters. Totals are provided for both the number of attacks, and number of groups, and are broken down by attack type
+
+Authorizations:
+Bearer Auth
+query Parameters
+region	
+string
+Value: "dskbank"
+Filter to takedowns under a specific region. If this parameter is not specified, or the given value is not a valid region name, then totals from all accessible regions will be shown.
+
+dskbank - DSK Bank AD
+attack_types	
+string
+Enum: "url" "email" "phone" … 180 more
+Filter to takedowns with the given attack type. Multiple values may be provided as a comma-separated list.
+
+You can find more information about the different attack types here.
+
+ip	
+string <ipv4>
+Filter to takedowns that are hosted on the given IPv4 address, or within the given IPv4 CIDR range. Note that partial values will not be matched.
+
+hoster	
+string
+Filter to takedowns that are hosted by the given organisation.
+
+registrar	
+string
+Filter to takedowns based on the name of the domain registrar of the attack.
+
+group_id	
+integer
+Filter to takedowns that share a group with the given takedown ID. You can specify the ID for any takedown in the group, as well as the group ID.
+
+date_from	
+string <date-time>
+Filter to takedowns that were submitted on or after the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+date_to	
+string <date-time>
+Filter to takedowns that were submitted on or before the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+updated_since	
+string <date-time>
+Filter to takedowns that have been updated on or after the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+auth_hours_more	
+integer
+Filter to takedowns which have been authorised for more than the given number of hours.
+
+auth_hours_less	
+integer
+Filter to takedowns which have been authorised for less than the given number of hours.
+
+auth_date_from	
+string <date-time>
+Filter to takedowns that were authorised on or after the given date and time..
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+auth_date_to	
+string <date-time>
+Filter to takedowns that were authorised on or before the given date and time..
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+esc_hours_more	
+integer
+Filter to takedowns which have been escalated for more than the given number of hours.
+
+esc_hours_less	
+integer
+Filter to takedowns which have been escalated for less than the given number of hours.
+
+esc_date_from	
+string <date-time>
+Filter to takedowns that were escalated on or after the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 00:00:00. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+esc_date_to	
+string <date-time>
+Filter to takedowns that were escalated on or before the given date and time.
+
+Values should be supplied as YYYY-MM-DD HH:MM:SS in UTC. If no time information is provided, the system will default to YYYY-MM-DD 23:59:59. Relative date/time formats are also supported, for example 5 days ago, and monday this week.
+
+url	
+string
+Filter by URL, email, hostname, domain or IP. Works the same way as the "Search by Attack" filter on the "View Attacks" page of the web interface.
+
+reporter	
+string
+Enum: "customer" "netcraft"
+Filter to takedowns reported by the given entity. Defaults to all reporters.
+
+customer - Takedowns reported by you.
+netcraft - Takedowns reported by us.
+reporter_email	
+string
+Filter to takedowns that were reported by the given user.
+
+report_source	
+string
+Enum: "interface" "phish_feed" "referer" … 4 more
+Filter to takedowns that were reported through the given mechanism.
+
+interface - Reported using the Takedown web interface.
+phish_feed - Reported via the Netcraft Phishing Feed.
+referer - Reported via the Netcraft Referer Monitoring service.
+forensic - Reported from DMARC Forensic reports.
+api - Reported via the Takedown API.
+email_feed - Reported via the Netcraft Email Fraud Feed.
+fraud_detection - Reported via the Netcraft Fraud Detection service.
+domain_attack	
+Array of strings
+Default: "all"
+Items Enum: "all" "yes" "yes_low_confidence" … 1 more
+Filter based on whether the domain name used in the attack is believed to be fraudulent. Multiple values may be provided as a comma-separated list.
+
+all - All attacks.
+yes - There is a high confidence that the domain name is fraudulent. The domain registrar will be contacted, and the webmaster will not be contacted.
+yes_low_confidence - The domain is likely fraudulent. The domain registrar will be contacted, and the webmaster will still be contacted.
+no - The domain name is not believed to be fraudulent, this is likely a compromised site.
+hostname_attack	
+Array of strings
+Default: "all"
+Items Enum: "all" "yes" "yes_low_confidence" … 1 more
+Filter based on whether the hostname used in the attack is believed to be fraudulent. Multiple values may be provided as a comma-separated list.
+
+all - All attacks.
+yes - There is a high confidence that the hostname is fraudulent. The Certificate Authority will be contacted.
+yes_low_confidence - The hostname is likely fraudulent.
+no - The hostname is not believed to be fraudulent, this is likely a compromised site.
+auth_given_only	
+integer
+Value: 1
+When present, filter to takedowns which have been authorised.
+
+phishkit_only	
+integer
+Value: 1
+When present, filter to takedowns which have an associated phishing kit.
+
+has_certificate	
+integer
+Enum: 0 1
+When present, filter to takedowns of attacks with a valid SSL certificate.
+
+customer_label	
+string
+Filter to takedowns with the given customer label. This label is a free-text field which can be provided when reporting an attack.
+
+language	
+string
+Filter to takedowns based on the language used in the attack.
+
+tags	
+Array of strings
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+Filter to takedowns with the given tags. All tags must be applied to a takedown for it to be returned. Multiple values may be provided as a comma-separated list.
+
+You can find more information about tagging attacks here.
+
+auto	
+string
+Enum: "automated" "managed"
+Filter based on the service type of the takedown.
+
+automated - The takedown is being conducted under an automated service.
+managed - The takedown is being conducted under a managed service.
+waiting_for_customer	
+string
+Enum: "no" "yes" "yes_other" … 6 more
+Filter takedowns based on whether they are waiting for any actions to be taken by the customer. Please note that we may add values to this field without warning, but that these will begin yes_.
+
+no - The takedown is not waiting for any actions to be taken. Note that certain actions, such as authorisation, are not covered by this state.
+yes - This takedown requires one or more actions to be taken by you before it can proceed. This meta-category is used to filter to any attack with a reason other than "Not waiting for customer" or "Excluded by customer".
+yes_other - This takedown requires one or more actions to be taken by you before it can proceed. This category is nonspecific so please check the notes to see what actions are required.
+yes_loa - This takedown requires a Proof of Agent document, also known as a Letter of Authorisation, to be uploaded by you before it can proceed. This is because a provider requires evidence that Netcraft acts on your behalf. Please email this document to support@netcraft.com for us to process.
+yes_trademarks - This takedown requires a Trademark Registration Certificate to be uploaded by you before it can proceed. This is because a provider requires evidence that you hold the trademarks being infringed. Please email this document to support@netcraft.com for us to process.
+yes_evidence - This takedown requires evidence of the malicious content to be uploaded by you before it can proceed. Please check the notes for further details.
+yes_business - This takedown requires a Proof of Business document to be uploaded by you before it can proceed. This is because a provider requires evidence that the affected entity is a legitimate business. Please email this document to support@netcraft.com for us to process.
+yes_own_site - We suspect this resource could be owned or controlled by you, so continuing to take it down could result in a false positive. Please investigate whether this is a legitimate resource that you own or control, and add a note to this takedown letting us know the result of the investigation.
+yes_but_excluded - You were required to take an action for this takedown, but you indicated that the action could not be completed.
+Responses
+200 Totals of attacks matching the given filters.
+Response Schema: application/json
+attacks
+required
+object (TakedownCounts)
+An object containing the total number of attacks, split by takedown status. The possible statuses are:
+
+unverified - The report has not yet been verified as fraudulent by Netcraft
+inactive_monitoring - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+contacted_hosting - Takedown notices have been sent to the hosting provider
+contacted_police - The takedown has been escalated to local law enforcement.
+contacted_upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+resolved_monitoring - The attack is offline, as is being monitored in case it returns.
+resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+invalid - The report is not a valid takedown target.
+groups
+required
+object (TakedownCounts)
+An object containing the total number of groups, split by takedown status. The possible statuses are:
+
+unverified - The report has not yet been verified as fraudulent by Netcraft
+inactive_monitoring - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+contacted_hosting - Takedown notices have been sent to the hosting provider
+contacted_police - The takedown has been escalated to local law enforcement.
+contacted_upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+resolved_monitoring - The attack is offline, as is being monitored in case it returns.
+resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+invalid - The report is not a valid takedown target.
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View totals for a particular region
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    https://takedown.netcraft.com/api/v1/counts/
+
+# View totals for phishing URL takedowns submitted within the last 6 months
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'attack_types=phishing_url' \
+    --data-urlencode 'date_from=6 months ago' \
+    https://takedown.netcraft.com/api/v1/counts/
+
+# View totals for takedowns submitted within the last year through the interface by a member of your team
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'reporter=customer' \
+    --data-urlencode 'date_from=12 months ago' \
+    https://takedown.netcraft.com/api/v1/counts/
+
+# View totals for takedowns with a fraudulent domain that are registered with the given registrar
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'domain_attack=yes,yes_low_confidence' \
+    --data-urlencode 'registrar=Example Registrar' \
+    https://takedown.netcraft.com/api/v1/counts/
+
+# View totals for phishing URL and fake shop takedowns authorised for more than the given number of hours on the given domain name
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'attack_type=phishing_url,fake_shop' \
+    --data-urlencode 'auth_hours_more=24' \
+    --data-urlencode 'url=examp1eb4nk.com' \
+    https://takedown.netcraft.com/api/v1/counts/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"attacks": {
+"unverified": {
+"count": 97
+},
+"inactive_monitoring": {
+"count": 311
+},
+"verified": {
+"count": 785
+},
+"contacted_hosting": {
+"count": 591
+},
+"contacted_police": {
+"count": 999
+},
+"contacted_upstream": {
+"count": 310
+},
+"monitoring": {
+"count": 284
+},
+"resolved": {
+"count": 600
+},
+"stale": {
+"count": 843
+},
+"invalid": {
+"count": 744
+}
+},
+"groups": {
+"unverified": {
+"count": 747
+},
+"inactive_monitoring": {
+"count": 28
+},
+"verified": {
+"count": 620
+},
+"contacted_hosting": {
+"count": 668
+},
+"contacted_police": {
+"count": 191
+},
+"contacted_upstream": {
+"count": 137
+},
+"monitoring": {
+"count": 61
+},
+"resolved": {
+"count": 50
+},
+"stale": {
+"count": 93
+},
+"invalid": {
+"count": 742
+}
+}
+}
+Event Sources
+View Takedown Events
+
+get
+/events
+Minimum Access Level Required	Viewer
+Deprecated Endpoint Name 	https://takedown.netcraft.com/apis/events.php
+This endpoint can be used as an event source for integrations with technologies such as Splunk and Sentinel. It returns a list of events, where each event represents a change to one of your takedowns. You can access events from up to 2 months ago, after which the information is archived.
+
+Authorizations:
+Bearer Auth
+query Parameters
+region	
+string
+Value: "dskbank"
+Filter to events under a specific region. If this parameter is not specified, or the given value is not a valid region name, then events from all accessible regions will be shown.
+
+dskbank - DSK Bank AD
+last_event_id	
+integer
+Return events with an ID greater than the given value. If this value is not provided, the earliest available events will be provided, up to the limit defined by max_results.
+
+max_results	
+integer <= 2500
+Default: 2500
+Limits the number of events returned by the API in a single request.
+
+format	
+string
+Default: "splunk"
+Enum: "splunk" "sentinel"
+Used to specify the format of the results returned.
+
+splunk - Returns results in a format compatible with Splunk.
+sentinel - Returns results in a format compatible with Sentinel. (At present, the only difference between this and the splunk format is that the all of the date/time values are formatted using ISO-8601 for sentinel).
+date_format	
+string
+Default: "default"
+Enum: "default" "iso8601" "rfc2822" … 1 more
+The format to return date/time values in.
+
+default - YYYY-MM-DD HH:MM:SS Timezone
+iso8601 - ISO 8601 format.
+rfc2822 - RFC 2822 format.
+unix - Unix timestamp, i.e. the number of seconds since the Unix epoch (1970-10-01 00:00:00 UTC).
+The value of this parameter will override any date/time format implied by the format parameter.
+
+Responses
+200 A list of takedown update events.
+Response Schema: application/json
+Array 
+event_id
+required
+integer
+A unique identifier for this event. The order of the IDs is chronologically consistent, with larger event IDs occurring more recently than smaller IDs.
+
+date
+required
+string <date-time>
+The date and time that the event occurred.
+
+change
+required
+string
+A description of the change that triggered the event. Possible events:
+
+New takedown (New Attack)
+Takedown authorised (e.g. Takedown authorised by Netcraft)
+Takedown unauthorised (e.g. Takedown unauthorised by Netcraft)
+Takedown escalated (e.g. Attack escalated by Netcraft)
+Takedown unescalated (e.g. Attack unescalated by Netcraft)
+Takedown status changed (e.g. Status: contacted_hosting => monitoring)
+Takedown domain attack status changed (e.g. Domain Attack: no => yes)
+Takedown hostname attack status changed (e.g. Hostname Attack: no => yes_low_confidence)
+The remaining fields represent the current state of the takedown.
+
+id
+required
+integer
+The ID of the takedown.
+
+group_id
+required
+integer
+Default: ""
+The ID of the group that the takedown belongs to. Can potentially be the same as id, or empty if there is no group.
+
+attack_url
+required
+string <url>
+The location of the attack being taken down. This field contains a canonicalised value. See the reported_url field for the exact location that was reported to takedown.
+
+ip
+required
+string <ipv4>
+Default: ""
+The IPv4 address of the attack.
+
+country_code
+required
+string
+Default: ""
+ISO country code of the advertised hosting location.
+
+date_submitted
+required
+string <date-time>
+The date and time that the takedown was reported, in UTC.
+
+region
+required
+string
+Value: "dskbank"
+The name of the area that the takedown resides in.
+
+dskbank - DSK Bank AD
+target_brand
+required
+string
+Value: "DSK Bank"
+The name of the brand being targeted by the attack.
+
+authgiven
+required
+integer
+Enum: 0 1
+Indicates whether the takedown has been authorised.
+
+1 - Takedown has been authorised.
+0 - Takedown has not been authorised.
+registrar
+required
+string
+Default: "Unknown"
+The name of the registrar responsible for the domain name used in the attack.
+
+customer_label
+required
+string
+Default: ""
+A custom field which may be provided along with the takedown report.
+
+date_authed
+required
+string <date-time>
+Default: ""
+The date and time that the takedown was authorised, in UTC.
+
+date_first_actioned
+required
+string <date-time>
+Default: ""
+The date and time of the first action taken by Netcraft after the takedown was reported, in UTC. This is calculated as the first time that the takedown was moved out of the "Unverified" status.
+
+domain
+required
+string <domain>
+Default: ""
+The domain of the URL or email address being taken down. This will be blank for attacks with no domain name.
+
+language
+required
+string
+Default: ""
+The language used in the attack (if it can be determined).
+
+attack_type
+required
+string
+Enum: "url" "email" "phone" … 180 more
+The type of attack being taken down.
+
+You can find more information about the different attack types here.
+
+status
+required
+string
+Enum: "Unverified" "Inactive (Monitoring)" "Verified" … 7 more
+The status of the takedown.
+
+Unverified - The report has not yet been verified as fraudulent by Netcraft
+Inactive (Monitoring) - The attack went offline before Netcraft was authorised to start the takedown process, and is being monitored in case it returns.
+Verified - The report has been verified as fraudulent, but no takedown notices have been sent.
+Contacted Hosting - Takedown notices have been sent to the hosting provider
+Contacted Police - The takedown has been escalated to local law enforcement.
+Contacted Upstream - The takedown has been escalated to the organisation providing connectivity to the hosting provider.
+Monitoring - The attack is offline, as is being monitored in case it returns.
+Resolved - The attack has been offline for 7 consecutive days, and is no longer being monitored.
+Stale - The attack went offline before Netcraft was authorised to start the takedown process, and is no longer being monitored.
+Invalid - The report is not a valid takedown target.
+hostname
+required
+string <hostname>
+Default: ""
+The full hostname of the URL or email address being taken down. This will be blank for attacks with no hostname.
+
+reporter
+required
+string
+The person/account that submitted the takedown. This will be the email address of the user, or "netcraft" for any reports made by us.
+
+report_source
+required
+string
+Enum: "Takedown Interface" "Phishing Feed" "Referrer Monitoring" … 4 more
+The method through which the takedown was submitted.
+
+Takedown Interface - Reported using the Takedown web interface.
+Phishing Feed - Reported via the Netcraft Phishing Feed.
+Referrer Monitoring - Reported via the Netcraft Referer Monitoring service.
+DMARC Forensic Reports - Reported from DMARC Forensic reports.
+Takedown API - Reported via the Takedown API.
+Email Fraud Feed - Reported via the Netcraft Email Fraud Feed.
+Fraud Detection - Reported via the Netcraft Fraud Detection service.
+fwd_owner
+required
+string
+Default: "[unknown]"
+The owner of the forward DNS infrastructure.
+
+rev_owner
+required
+string
+Default: "[unknown]"
+The owner of the reverse DNS infrastructure.
+
+reverse_dns
+required
+string
+Default: ""
+The output of a reverse DNS lookup on the IP of the attack.
+
+whois_server
+required
+string
+Default: ""
+The address of the WHOIS server used to query the attack domain.
+
+first_resolved
+required
+string or null <date-time>
+The date and time that the attack first went offline, in UTC.
+
+final_resolved
+required
+string or null <date-time>
+The date and time that the attack went offline for the final time, in UTC.
+
+first_outage
+required
+string or null <duration>
+The duration (HH:MM:SS) between when the takedown was authorised, and the first time that the attack went offline (first_resolved - date_authed).
+
+final_outage
+required
+string or null <duration>
+The duration (HH:MM:SS) between when the takedown was authorised, and the final time that the attack went offline (final_resolved - date_authed).
+
+status_change_uptime
+required
+string or null <duration>
+The total duration (HH:MM:SS) that the attack was available for after authorisation, as determined by the takedown status changes. i.e. the total amount of time since authorisation that an attack was not in the Resolved or Resolved (Monitoring) state.
+
+domain_attack
+required
+string
+Enum: "all" "yes" "yes_low_confidence" … 1 more
+Whether or not the domain name used in the attack is believed to be fraudulent.
+
+all - All attacks.
+yes - There is a high confidence that the domain name is fraudulent. The domain registrar will be contacted, and the webmaster will not be contacted.
+yes_low_confidence - The domain is likely fraudulent. The domain registrar will be contacted, and the webmaster will still be contacted.
+no - The domain name is not believed to be fraudulent, this is likely a compromised site.
+hostname_attack
+required
+string
+Enum: "all" "yes" "yes_low_confidence" … 1 more
+Whether or not the hostname used in the attack is believed to be fraudulent.
+
+all - All attacks.
+yes - There is a high confidence that the hostname is fraudulent. The Certificate Authority will be contacted.
+yes_low_confidence - The hostname is likely fraudulent.
+no - The hostname is not believed to be fraudulent, this is likely a compromised site.
+site_risk_rating
+required
+integer
+Default: 0
+A score from 0 to 10 which represents the risk that the hostname is hosting a malicious website. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the risk rating for l0gin.examp1eb4nk.com. This score is distinct from our "Deceptive Domain Score", and takes a range of factors into account, such as the reputation of the hosting provider, age of the domain name, search engine rankings and more.
+
+domain_risk_rating
+required
+integer
+Default: 0
+A score from 0 to 10 which represents the risk that the domain is hosting a malicious website. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the risk rating for examp1eb4nk.com. This score is distinct from our "Deceptive Domain Score", and takes a range of factors into account, such as the reputation of the hosting provider, age of the domain name, search engine rankings and more.
+
+deceptive_domain_score
+required
+number <float>
+Default: 0
+The Deceptive Domain Score of the domain. e.g. for the URL https://l0gin.examp1eb4nk.com/, this value will contain the Deceptive Domain Score for examp1eb4nk.com. You can find out more about how this score is calculated here.
+
+targeted_url
+required
+string <url>
+Default: ""
+The URL which this attack is masquerading as, e.g. the URL of the legitimate login form that a phishing attack is targeting.
+
+managed
+required
+boolean
+Deprecated
+Depreacated. Use service_type instead.
+
+service_type
+required
+string or null
+Enum: "automated" "managed" "default"
+The service type the takedown is being performed under.
+
+automated - The takedown is being conducted under an automated service.
+managed - The takedown is being conducted under a managed service.
+default - The takedown is being conducted under the default service.
+date_escalated
+required
+string <date-time>
+Default: ""
+The date and time that the takedown entered the managed state, in UTC.
+
+hoster
+required
+string
+Default: "Unknown"
+The name of the company responsible for the IP address.
+
+tags
+required
+Array of strings
+Default: []
+Items Enum: "smishing" "fake-shop-logo" "traffic_distribution_system" … 24 more
+List of tags applied to the attack.
+
+You can find more information about tagging attacks here.
+
+400 There is a problem with the input provided to the API.
+403 The current user does not have access to the requested endpoint or region.
+500 An internal error has occurred within the system.
+503 The API is temporarily unavailable due to system maintenance.
+Request samples
+cURLPython
+
+Copy
+# View all events that have occurred since the last event you observed
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'last_event_id=1234' \
+    https://takedown.netcraft.com/api/v1/events/
+
+# View the oldest 100 events for the given region, in sentinel format
+curl -G \
+    -H 'Authorization: Bearer EXAMPLE5ze79ph0QKDLu2TAlNQdWloFt' \
+    --data-urlencode 'region=example_region' \
+    --data-urlencode 'max_results=100' \
+    --data-urlencode 'format=sentinel' \
+    https://takedown.netcraft.com/api/v1/events/
+Response samples
+200400403500503
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+[
+{
+"event_id": "1901367541",
+"date": "2025-07-18 15:41:53 UTC",
+"change": "string",
+"id": "30480489",
+"group_id": "30480489",
+"attack_url": "https://l0gin.examp1eb4nk.com/app/",
+"ip": "192.0.2.1",
+"country_code": "us",
+"date_submitted": "2025-07-18 14:46:53 UTC",
+"region": "example_region",
+"target_brand": "Example Brand",
+"authgiven": 1,
+"registrar": "Example Registrar",
+"customer_label": "Internal Issue #12345",
+"date_authed": "2025-07-18 14:56:53 UTC",
+"date_first_actioned": "2025-07-18 15:01:53 UTC",
+"domain": "examp1eb4nk.com",
+"language": "english",
+"attack_type": "phishing_url",
+"status": "Monitoring",
+"hostname": "l0gin.examp1eb4nk.com",
+"reporter": "user@examplebank.com",
+"report_source": "Takedown Interface",
+"fwd_owner": "exampleregistrar.com",
+"rev_owner": "examplehost.com",
+"reverse_dns": "192-0-2-1.examplehost.com",
+"whois_server": "whois.exampleregistrar.com",
+"first_resolved": "2025-07-18 15:31:53 UTC",
+"final_resolved": "2025-07-18 15:41:53 UTC",
+"first_outage": "00:35:00",
+"final_outage": "00:45:00",
+"status_change_uptime": "00:40:00",
+"domain_attack": "yes",
+"hostname_attack": "yes_low_confidence",
+"site_risk_rating": 9,
+"domain_risk_rating": 10,
+"deceptive_domain_score": 9.85,
+"targeted_url": "https://examplebank.com/",
+"managed": false,
+"service_type": "automated",
+"date_escalated": "",
+"hoster": "Example Host",
+"tags": [
+"example-tag"
+]
+}
+]
