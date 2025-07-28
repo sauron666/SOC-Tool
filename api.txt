@@ -2,7 +2,6 @@ service-switcher icon consisting of four squares
 Netcraft Logo
 Takedown
 capital letter A in a circle
-martin_stefanov@dskbank.bg
 Dashboard
 View attacks
 Report attack
@@ -102,18 +101,18 @@ The reason for your report, such as a description of the attack.
 
 region	
 string
-Value: "dskbank"
+Value: "bank"
 The name of the region to create a takedown under.
 
-dskbank - DSK Bank AD
+Bank AD
 This parameter is required if you have access for more than one region.
 
 brand	
 string
-Value: "dskbank"
+Value: "bank"
 The brand to report the takedown under. If no brand is specified, the brand of the provided region will be used.
 
-dskbank - DSK Bank
+bank -  Bank
 type	
 string
 Default: "phishing_url"
@@ -365,10 +364,10 @@ Filter to attacks that are hosted on the given IPv4 address, or within the given
 
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to takedowns residing under the given region. If the provided region is invalid, or the parameter is not specified, then takedowns from all accessible regions will be shown.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 reporter	
 string
 Enum: "customer" "netcraft"
@@ -409,10 +408,10 @@ stale - The attack went offline before Netcraft was authorised to start the take
 invalid - The report is not a valid takedown target.
 target_brand	
 Array of strings
-Items Value: "dskbank"
+Items Value: "bank"
 Filter to takedowns targeting the given brand. Multiple values may be provided as a comma-separated list.
 
-dskbank - DSK Bank
+bank -  Bank
 attack_types	
 Array of strings
 Items Enum: "url" "email" "phone" … 180 more
@@ -713,14 +712,14 @@ The description of the takedown.
 region
 required
 string
-Value: "dskbank"
+Value: "bank"
 The name of the area that the takedown resides in.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 target_brand
 required
 string
-Value: "DSK Bank"
+Value: " Bank"
 The name of the brand being targeted by the attack.
 
 status
@@ -1351,10 +1350,10 @@ Filter to attacks that are hosted on the given IPv4 address, or within the given
 
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to takedowns residing under the given region. If the provided region is invalid, or the parameter is not specified, then takedowns from all accessible regions will be shown.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 reporter	
 string
 Enum: "customer" "netcraft"
@@ -1395,10 +1394,10 @@ stale - The attack went offline before Netcraft was authorised to start the take
 invalid - The report is not a valid takedown target.
 target_brand	
 Array of strings
-Items Value: "dskbank"
+Items Value: "bank"
 Filter to takedowns targeting the given brand. Multiple values may be provided as a comma-separated list.
 
-dskbank - DSK Bank
+bank -  Bank
 attack_types	
 Array of strings
 Items Enum: "url" "email" "phone" … 180 more
@@ -1699,14 +1698,14 @@ The description of the takedown.
 region
 required
 string
-Value: "dskbank"
+Value: "bank"
 The name of the area that the takedown resides in.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 target_brand
 required
 string
-Value: "DSK Bank"
+Value: " Bank"
 The name of the brand being targeted by the attack.
 
 status
@@ -2235,16 +2234,16 @@ The reason for your report, such as a description of the attack.
 
 set_region	
 string
-Value: "dskbank"
+Value: "bank"
 The name of the region to move the takedown under.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 set_brand	
 string
-Value: "dskbank"
+Value: "bank"
 The brand to move the takedown under.
 
-dskbank - DSK Bank
+bank -  Bank
 set_suspected_fraudulent_domain	
 boolean
 Should be set to true if you believe that the domain name has been registered as part of the fraud. This will ensure that the registrar is contacted to seek suspension of the domain name.
@@ -2289,14 +2288,14 @@ The current value of the attack's description field.
 region
 required
 string
-Value: "dskbank"
+Value: "bank"
 The name of the area that the takedown resides in.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 target_brand
 required
 string
-Value: "DSK Bank"
+Value: " Bank"
 The name of the brand being targeted by the attack.
 
 suspected_fraudulent_domain
@@ -3241,10 +3240,10 @@ query Parameters
 region
 required
 string
-Value: "dskbank"
+Value: "bank"
 The name of the region to generate the list of available attack types for.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 name	
 string
 Enum: "url" "email" "phone" … 180 more
@@ -3387,10 +3386,10 @@ Bearer Auth
 query Parameters
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to contracts which cover the given region. If no region is provided, results will be returned for all visible regions.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 contract_type[]	
 Array of strings
 Items Enum: "automated" "managed" "feed"
@@ -3500,10 +3499,10 @@ Bearer Auth
 query Parameters
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to impersonation targets that the given region has access to. If this parameter is not specified or the given value is not a valid region name, then impersonation targets from all accessible regions will be shown.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 Responses
 200 A list of impersonation targets.
 Response Schema: application/json
@@ -3572,10 +3571,10 @@ Bearer Auth
 query Parameters
 region	
 string
-Value: "dskbank"
+Value: "bank"
 The name of the region used to generate the list of sub-regions and brands for
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 Responses
 200 A list of regions and brands
 Response Schema: application/json
@@ -3663,10 +3662,10 @@ Bearer Auth
 query Parameters
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to users with access to the given region. If no value is given for this parameter, then all users with access to any of your regions will be returned.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 sub_regions	
 boolean
 Default: false
@@ -3687,7 +3686,7 @@ unix - Unix timestamp, i.e. the number of seconds since the Unix epoch (1970-10-
 Responses
 200 A list of user accounts with access to the specified regions.
 Response Schema: application/json
-dskbank	
+bank	
 Array of objects (UserAccount) [ items ]
 400 There is a problem with the input provided to the API.
 403 The current user does not have access to the requested endpoint or region.
@@ -3711,7 +3710,7 @@ application/json
 Copy
 Expand allCollapse all
 {
-"dskbank": [
+"bank": [
 {
 "username": "user@examplebank.com",
 "access_level": "Escalator",
@@ -3736,10 +3735,10 @@ Bearer Auth
 query Parameters
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to takedowns under a specific region. If this parameter is not specified, or the given value is not a valid region name, then totals from all accessible regions will be shown.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 attack_types	
 string
 Enum: "url" "email" "phone" … 180 more
@@ -4081,10 +4080,10 @@ Bearer Auth
 query Parameters
 region	
 string
-Value: "dskbank"
+Value: "bank"
 Filter to events under a specific region. If this parameter is not specified, or the given value is not a valid region name, then events from all accessible regions will be shown.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 last_event_id	
 integer
 Return events with an ID greater than the given value. If this value is not provided, the earliest available events will be provided, up to the limit defined by max_results.
@@ -4179,14 +4178,14 @@ The date and time that the takedown was reported, in UTC.
 region
 required
 string
-Value: "dskbank"
+Value: "bank"
 The name of the area that the takedown resides in.
 
-dskbank - DSK Bank AD
+bank -  Bank AD
 target_brand
 required
 string
-Value: "DSK Bank"
+Value: " Bank"
 The name of the brand being targeted by the attack.
 
 authgiven
